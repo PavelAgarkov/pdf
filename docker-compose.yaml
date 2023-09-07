@@ -5,7 +5,7 @@ services:
     stdin_open: true
     tty: true
     image: node:18
-    working_dir: /www/pdf/frontend
+    working_dir: /www/pdf/pdf-frontend
     user: node
     volumes:
       - ..:/www
