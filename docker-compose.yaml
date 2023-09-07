@@ -1,0 +1,32 @@
+version: "3.9"
+services:
+  node:
+    container_name: 'node-local'
+    stdin_open: true
+    tty: true
+    image: node:18
+    working_dir: /www/pdf/frontend
+    user: node
+    volumes:
+      - ..:/www
+    command: tail -f /dev/null
+    ports:
+      - "9499:9499"
+    networks:
+      - node-net
+  pdf:
+    build: .
+    volumes:
+      - ..:/www/src
+    command: go run main.go -buildvcs=false
+    working_dir: /www/src/pdf
+    ports:
+      - "3000:3000"
+    networks:
+      - pdf-net
+
+networks:
+  pdf-net:
+    driver: bridge
+  node-net:
+    driver: bridge
