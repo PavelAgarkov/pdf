@@ -1,3 +1,4 @@
 vendor
-frontend
 /files/
+pdf-frontend
+/pdf-frontend/

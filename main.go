@@ -8,9 +8,9 @@ import (
 	"pdf/internal/route"
 )
 
-const FrontendDist = "./frontend/dist"
-const FrontendAssets = "./frontend/dist/assets/"
-const FaviconFile = "./frontend/dist/favicon.ico"
+const FrontendDist = "./pdf-frontend/dist"
+const FrontendAssets = "./pdf-frontend/dist/assets/"
+const FaviconFile = "./pdf-frontend/dist/favicon.ico"
 const address = ":3000"
 
 func main() {
