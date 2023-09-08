@@ -1,27 +1,64 @@
 package controller
 
 import (
+	"context"
 	"errors"
 	"github.com/gofiber/fiber/v2"
 	"io/fs"
 	"path/filepath"
+	"time"
 )
 
-type FileController struct{}
+type FileController struct {
+}
+type Response struct {
+	str string
+}
+
+func (r *Response) GetStr() string {
+	return r.str
+}
 
 func GetFC() *FileController {
 	return &FileController{}
 }
 
-func (f *FileController) GetCallback(filesPath string) func(c *fiber.Ctx) error {
+func (f *FileController) FileController(filesPath string) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
-		c.Route()
+		ctx, cancel := context.WithTimeout(c.Context(), 3*time.Second)
+		defer cancel()
+
+		ch := make(chan ResponseInterface)
+		start := make(chan struct{})
+
 		filename := filesPath + c.Params("filename")
-		err := filepath.WalkDir(filename, walk)
-		if err != nil {
+		go func() {
+			<-start
+			err := filepath.WalkDir(filename, walk)
+			if err != nil {
+				ch <- &Response{str: "redirect"}
+				return
+			}
+			ch <- &Response{str: "download"}
+			return
+		}()
+
+		res := getBaseController().SelectResult(ctx, ch, start)
+
+		// context cancelled
+		if res == nil {
 			return c.RedirectToRoute("root", map[string]interface{}{})
 		}
-		return c.Download(filename)
+
+		if res.GetStr() == "redirect" {
+			return c.RedirectToRoute("root", map[string]interface{}{})
+		}
+
+		if res.GetStr() == "download" {
+			return c.Download(filename)
+		}
+
+		return nil
 	}
 }
 

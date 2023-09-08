@@ -8,6 +8,6 @@ import (
 const FilesPath = "./files/"
 
 func Router(app *fiber.App) {
-	app.Get("/download/:filename", controller.GetFC().GetCallback(FilesPath)).
+	app.Get("/download/:filename", controller.GetFC().FileController(FilesPath)).
 		Name("file-download")
 }
