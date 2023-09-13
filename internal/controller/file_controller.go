@@ -6,6 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"io/fs"
 	"path/filepath"
+	"pdf/internal/logger"
 	"time"
 )
 
@@ -23,13 +24,18 @@ func GetFC() *FileController {
 	return &FileController{}
 }
 
-func (f *FileController) FileController(filesPath string) func(c *fiber.Ctx) error {
+func (f *FileController) FileController(filesPath string, loggerFactory *logger.LoggerFactory) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		ctx, cancel := context.WithTimeout(c.Context(), 3*time.Second)
 		defer cancel()
 
 		ch := make(chan ResponseInterface)
 		start := make(chan struct{})
+		frontendLogger := loggerFactory.GetFrontendLogger()
+		frontendLogger.Error("frontend")
+		loggerFactory.GetErrorLogger().Error("errror")
+		loggerFactory.GetInfoLogger().Info("Info")
+		loggerFactory.GetWarningLogger().Warn("warning")
 
 		filename := filesPath + c.Params("filename")
 		go func() {

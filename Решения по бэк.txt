@@ -2,3 +2,4 @@
 для работы с pdf ---> https://github.com/unidoc/unipdf (слияние, разбиение, удаление пароля из файла, компрессия файла, извлечение текста из файла)
 для email ---> пакее smtp
 для работы с telegram ---> https://core.telegram.org/bots --->  https://github.com/go-telegram-bot-api/telegram-bot-api
+для логирования go.uber.org/zap

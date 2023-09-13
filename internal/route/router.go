@@ -6,14 +6,15 @@ import (
 	"github.com/gofiber/fiber/v2/log"
 	"github.com/gofiber/fiber/v2/middleware/favicon"
 	"pdf/internal/controller"
+	"pdf/internal/logger"
 )
 
 const FilesPath = "./files/"
 const FaviconFile = "./pdf-frontend/dist/favicon.ico"
 const FrontendAssets = "./pdf-frontend/dist/assets/"
 
-func Router(app *fiber.App) {
-	app.Get("/download/:filename", controller.GetFC().FileController(FilesPath)).
+func Router(app *fiber.App, loggerFactory *logger.LoggerFactory) {
+	app.Get("/download/:filename", controller.GetFC().FileController(FilesPath, loggerFactory)).
 		Name("file-download")
 }
 
@@ -27,7 +28,7 @@ func ServiceRouter(app *fiber.App) {
 	app.Static("/assets/", FrontendAssets).Name("assets")
 }
 
-func Middleware(app *fiber.App) {
+func Middleware(app *fiber.App, loggerFactory *logger.LoggerFactory) {
 	// favicon middleware
 	app.Use(favicon.New(favicon.Config{
 		File: FaviconFile,
