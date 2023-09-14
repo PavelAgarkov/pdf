@@ -24,32 +24,23 @@ func GetFC() *FileController {
 	return &FileController{}
 }
 
-func (f *FileController) FileController(filesPath string, loggerFactory *logger.LoggerFactory) func(c *fiber.Ctx) error {
+func (f *FileController) FileController(
+	ctx context.Context,
+	filesPath string,
+	factory *logger.Factory,
+) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
-		ctx, cancel := context.WithTimeout(c.Context(), 3*time.Second)
+		ctxC, cancel := context.WithTimeout(ctx, 10*time.Second)
 		defer cancel()
 
-		ch := make(chan ResponseInterface)
+		cr := make(chan ResponseInterface)
 		start := make(chan struct{})
-		frontendLogger := loggerFactory.GetFrontendLogger()
-		frontendLogger.Error("frontend")
-		loggerFactory.GetErrorLogger().Error("errror")
-		loggerFactory.GetInfoLogger().Info("Info")
-		loggerFactory.GetWarningLogger().Warn("warning")
 
+		factory.GetLogger(logger.ErrorName).Error("Panice")
 		filename := filesPath + c.Params("filename")
-		go func() {
-			<-start
-			err := filepath.WalkDir(filename, walk)
-			if err != nil {
-				ch <- &Response{str: "redirect"}
-				return
-			}
-			ch <- &Response{str: "download"}
-			return
-		}()
+		go realHandler(start, cr, filename)
 
-		res := getBaseController().SelectResult(ctx, ch, start)
+		res := getBaseController().SelectResult(ctxC, cr, start)
 
 		// context cancelled
 		if res == nil {
@@ -68,13 +59,28 @@ func (f *FileController) FileController(filesPath string, loggerFactory *logger.
 	}
 }
 
-func walk(s string, d fs.DirEntry, err error) error {
-	if err != nil {
-		return err
-	}
-	if d.IsDir() {
-		return errors.New("file must be f")
-	}
+func realHandler(start chan struct{}, ch chan ResponseInterface, filename string) {
+	<-start
 
-	return nil
+	err := filepath.WalkDir(
+		filename,
+		func(s string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			if d.IsDir() {
+				return errors.New("file must be f")
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		ch <- &Response{str: "redirect"}
+		return
+	}
+	ch <- &Response{str: "download"}
+
+	return
 }

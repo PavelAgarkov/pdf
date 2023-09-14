@@ -1,0 +1,1 @@
+Логирование стека вызовов - loggerFactory.GetLogger(logger.ErrorName).With(zap.Stack("stackTrace")).Error("errror")

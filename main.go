@@ -1,17 +1,17 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/log"
 	"github.com/gofiber/template/html/v2"
+	"go.uber.org/zap"
 	"os"
 	"os/signal"
 	"pdf/internal/logger"
 	"pdf/internal/route"
 	"sync"
 	"syscall"
-	"time"
 )
 
 const FrontendDist = "./pdf-frontend/dist"
@@ -22,11 +22,7 @@ func main() {
 }
 
 func runServer() {
-	defer func() {
-		if r := recover(); r != nil {
-			fmt.Println("Recovered. Error:\n", r)
-		}
-	}()
+	defer recoveryFunction()
 	defer cleanupTasks()
 
 	engine := html.New(FrontendDist, ".html")
@@ -34,44 +30,47 @@ func runServer() {
 		Views: engine,
 	})
 
-	sig := make(chan os.Signal, 1)
+	sig := make(chan os.Signal)
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGKILL)
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	loggerFactory := logger.GetLoggerFactory(logger.GetMapLogger())
+	defer loggerFactory.FlushLogs(loggerFactory)
+
+	route.ServiceRouter(app)
+	route.Router(ctx, app, loggerFactory)
+	route.Middleware(app, loggerFactory)
 
 	var serverShutdown sync.WaitGroup
 	go func() {
 		_ = <-sig
 		serverShutdown.Add(1)
 		fmt.Println("Gracefully shutting down...")
-		_ = app.ShutdownWithTimeout(1 * time.Second)
-		fmt.Println("Wait timeout")
+		_ = app.ShutdownWithContext(ctx)
+		cancel()
 		serverShutdown.Done()
+		fmt.Println("Server STOPPED")
+		return
 	}()
 
-	loggerFactory := logger.GetLoggerFactory(
-		logger.PanicLog,
-		logger.ErrLog,
-		logger.WarningLog,
-		logger.InfoLog,
-		logger.FrontendLog,
-	)
-	defer loggerFactory.FlushLogs(loggerFactory)
-
-	route.ServiceRouter(app)
-	route.Router(app, loggerFactory)
-	route.Middleware(app, loggerFactory)
-
 	if err := app.Listen(address); err != nil {
-		log.Panic(err)
-		errStr := fmt.Sprintf("server is stopped by error %s", err.Error())
-		fmt.Println(errStr)
-		cleanupTasks()
-		panic(errStr)
+		loggerFactory.
+			GetLogger(logger.PanicName).
+			With(zap.Stack("stackTrace")).
+			Panic(fmt.Sprintf("server is stopped by error %s", err.Error()))
 		return
 	}
 
 	serverShutdown.Wait()
 
 	return
+}
+
+func recoveryFunction() {
+	if r := recover(); r != nil {
+		fmt.Println("Recovered. Error:\n", r)
+	}
 }
 
 func cleanupTasks() {

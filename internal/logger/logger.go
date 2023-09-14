@@ -9,14 +9,29 @@ import (
 	"os"
 )
 
-const logDir = "./log"
-const PanicLog = "./log/panic.log"
-const ErrLog = "./log/error.log"
-const WarningLog = "./log/warning.log"
-const InfoLog = "./log/info.log"
-const FrontendLog = "./log/frontend.log"
+const (
+	logDir      = "./log"
+	PanicLog    = "./log/panic.log"
+	ErrLog      = "./log/error.log"
+	WarningLog  = "./log/warning.log"
+	InfoLog     = "./log/info.log"
+	FrontendLog = "./log/frontend.log"
+)
 
-type LoggerFactory struct {
+const (
+	PanicName    = "panic"
+	ErrorName    = "error"
+	WarningName  = "warning"
+	InfoName     = "info"
+	FrontendName = "frontend"
+)
+
+type Interface interface {
+	FlushLogs(logger *Factory)
+	GetLogger(name string) *zap.SugaredLogger
+}
+
+type Factory struct {
 	panicLogger    *zap.SugaredLogger
 	errLogger      *zap.SugaredLogger
 	warningLogger  *zap.SugaredLogger
@@ -24,32 +39,39 @@ type LoggerFactory struct {
 	frontendLogger *zap.SugaredLogger
 }
 
-func GetLoggerFactory(panicFile, errorFile, warningFile, infoFile, frontendFile string) *LoggerFactory {
-	l := LoggerFactory{}
-	return l.initLogger(panicFile, errorFile, warningFile, infoFile, frontendFile)
+func GetMapLogger() map[string]string {
+	return map[string]string{
+		PanicName:    PanicLog,
+		ErrorName:    ErrLog,
+		WarningName:  WarningLog,
+		InfoName:     InfoLog,
+		FrontendName: FrontendLog,
+	}
 }
 
-func (l *LoggerFactory) GetPanicLogger() *zap.SugaredLogger {
-	return l.panicLogger
+func GetLoggerFactory(name map[string]string) *Factory {
+	l := Factory{}
+	return l.initLogger(name)
 }
 
-func (l *LoggerFactory) GetErrorLogger() *zap.SugaredLogger {
-	return l.errLogger
+func (l *Factory) GetLogger(name string) *zap.SugaredLogger {
+	switch name {
+	case PanicName:
+		return l.panicLogger
+	case ErrorName:
+		return l.errLogger
+	case WarningName:
+		return l.warningLogger
+	case InfoName:
+		return l.infoLogger
+	case FrontendName:
+		return l.frontendLogger
+	default:
+		return nil
+	}
 }
 
-func (l *LoggerFactory) GetWarningLogger() *zap.SugaredLogger {
-	return l.warningLogger
-}
-
-func (l *LoggerFactory) GetInfoLogger() *zap.SugaredLogger {
-	return l.infoLogger
-}
-
-func (l *LoggerFactory) GetFrontendLogger() *zap.SugaredLogger {
-	return l.frontendLogger
-}
-
-func (*LoggerFactory) FlushLogs(logger *LoggerFactory) {
+func (l *Factory) FlushLogs(logger *Factory) {
 	fmt.Println("Flush logger")
 	err := logger.panicLogger.Sync()
 	if err != nil {
@@ -73,22 +95,22 @@ func (*LoggerFactory) FlushLogs(logger *LoggerFactory) {
 	}
 }
 
-func (l *LoggerFactory) initLogger(panicFile, errorFile, warningFile, infoFile, frontendFile string) *LoggerFactory {
-	return &LoggerFactory{
-		panicLogger:    l.initLoggerLevel(false, l.openLogFile(panicFile, logDir), zap.PanicLevel),
-		errLogger:      l.initLoggerLevel(false, l.openLogFile(errorFile, logDir), zap.ErrorLevel),
-		warningLogger:  l.initLoggerLevel(false, l.openLogFile(warningFile, logDir), zap.WarnLevel),
-		infoLogger:     l.initLoggerLevel(false, l.openLogFile(infoFile, logDir), zap.InfoLevel),
-		frontendLogger: l.initLoggerLevel(false, l.openLogFile(frontendFile, logDir), zap.ErrorLevel),
+func (l *Factory) initLogger(name map[string]string) *Factory {
+	return &Factory{
+		panicLogger:    l.initLoggerLevel(false, l.openLogFile(name[PanicName], logDir), zap.PanicLevel),
+		errLogger:      l.initLoggerLevel(false, l.openLogFile(name[ErrorName], logDir), zap.ErrorLevel),
+		warningLogger:  l.initLoggerLevel(false, l.openLogFile(name[WarningName], logDir), zap.WarnLevel),
+		infoLogger:     l.initLoggerLevel(false, l.openLogFile(name[InfoName], logDir), zap.InfoLevel),
+		frontendLogger: l.initLoggerLevel(false, l.openLogFile(name[FrontendName], logDir), zap.ErrorLevel),
 	}
 }
 
-func (*LoggerFactory) initLoggerLevel(d bool, f *os.File, level zapcore.Level) *zap.SugaredLogger {
-	pe := zap.NewProductionEncoderConfig()
-	pe.EncodeTime = zapcore.TimeEncoderOfLayout("2006-01-02 15:04:05")
+func (*Factory) initLoggerLevel(d bool, f *os.File, level zapcore.Level) *zap.SugaredLogger {
+	config := zap.NewProductionEncoderConfig()
+	config.EncodeTime = zapcore.TimeEncoderOfLayout("2006-01-02 15:04:05")
 
-	fileEncoder := zapcore.NewJSONEncoder(pe)
-	consoleEncoder := zapcore.NewConsoleEncoder(pe)
+	fileEncoder := zapcore.NewJSONEncoder(config)
+	consoleEncoder := zapcore.NewConsoleEncoder(config)
 
 	if d {
 		level = zap.DebugLevel
@@ -103,7 +125,7 @@ func (*LoggerFactory) initLoggerLevel(d bool, f *os.File, level zapcore.Level) *
 	return logger.Sugar()
 }
 
-func (*LoggerFactory) openLogFile(fname string, dirname string) *os.File {
+func (l *Factory) openLogFile(fname string, dirname string) *os.File {
 	if _, err := os.Stat(dirname); errors.Is(err, os.ErrNotExist) {
 		err := os.Mkdir(dirname, 0777)
 		if err != nil {
