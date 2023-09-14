@@ -11,7 +11,7 @@ const FilesPath = "./files/"
 const FaviconFile = "./pdf-frontend/dist/favicon.ico"
 const FrontendAssets = "./pdf-frontend/dist/assets/"
 
-func Router(ctx context.Context, app *fiber.App, factory *logger.Factory) {
+func Router(ctx context.Context, app *fiber.App, factory logger.Logger) {
 	app.Get("/download/:filename", controller.GetFC().FileController(ctx, FilesPath, factory)).
 		Name("file-download")
 }

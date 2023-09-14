@@ -26,8 +26,8 @@ const (
 	FrontendName = "frontend"
 )
 
-type Interface interface {
-	FlushLogs(logger *Factory)
+type Logger interface {
+	FlushLogs(logger Logger)
 	GetLogger(name string) *zap.SugaredLogger
 }
 
@@ -49,7 +49,7 @@ func GetMapLogger() map[string]string {
 	}
 }
 
-func GetLoggerFactory(name map[string]string) *Factory {
+func GetLoggerFactory(name map[string]string) Logger {
 	l := Factory{}
 	return l.initLogger(name)
 }
@@ -71,50 +71,46 @@ func (l *Factory) GetLogger(name string) *zap.SugaredLogger {
 	}
 }
 
-func (l *Factory) FlushLogs(logger *Factory) {
+func (l *Factory) FlushLogs(logger Logger) {
 	fmt.Println("Flush logger")
-	err := logger.panicLogger.Sync()
+	err := logger.GetLogger(PanicName).Sync()
 	if err != nil {
 		fmt.Println("failed buffered panic-logger flash " + err.Error())
 	}
-	err = logger.errLogger.Sync()
+	err = logger.GetLogger(ErrorName).Sync()
 	if err != nil {
 		fmt.Println("failed buffered err-logger flash " + err.Error())
 	}
-	err = logger.warningLogger.Sync()
+	err = logger.GetLogger(WarningName).Sync()
 	if err != nil {
 		fmt.Println("failed buffered warning-logger flash " + err.Error())
 	}
-	err = logger.infoLogger.Sync()
+	err = logger.GetLogger(InfoName).Sync()
 	if err != nil {
 		fmt.Println("failed buffered info-logger flash " + err.Error())
 	}
-	err = logger.frontendLogger.Sync()
+	err = logger.GetLogger(FrontendName).Sync()
 	if err != nil {
 		fmt.Println("failed buffered frontend-logger flash " + err.Error())
 	}
 }
 
-func (l *Factory) initLogger(name map[string]string) *Factory {
+func (l *Factory) initLogger(name map[string]string) Logger {
 	return &Factory{
-		panicLogger:    l.initLoggerLevel(false, l.openLogFile(name[PanicName], logDir), zap.PanicLevel),
-		errLogger:      l.initLoggerLevel(false, l.openLogFile(name[ErrorName], logDir), zap.ErrorLevel),
-		warningLogger:  l.initLoggerLevel(false, l.openLogFile(name[WarningName], logDir), zap.WarnLevel),
-		infoLogger:     l.initLoggerLevel(false, l.openLogFile(name[InfoName], logDir), zap.InfoLevel),
-		frontendLogger: l.initLoggerLevel(false, l.openLogFile(name[FrontendName], logDir), zap.ErrorLevel),
+		panicLogger:    l.initLoggerLevel(l.openLogFile(name[PanicName], logDir), zap.PanicLevel),
+		errLogger:      l.initLoggerLevel(l.openLogFile(name[ErrorName], logDir), zap.ErrorLevel),
+		warningLogger:  l.initLoggerLevel(l.openLogFile(name[WarningName], logDir), zap.WarnLevel),
+		infoLogger:     l.initLoggerLevel(l.openLogFile(name[InfoName], logDir), zap.InfoLevel),
+		frontendLogger: l.initLoggerLevel(l.openLogFile(name[FrontendName], logDir), zap.ErrorLevel),
 	}
 }
 
-func (*Factory) initLoggerLevel(d bool, f *os.File, level zapcore.Level) *zap.SugaredLogger {
+func (*Factory) initLoggerLevel(f *os.File, level zapcore.Level) *zap.SugaredLogger {
 	config := zap.NewProductionEncoderConfig()
 	config.EncodeTime = zapcore.TimeEncoderOfLayout("2006-01-02 15:04:05")
 
 	fileEncoder := zapcore.NewJSONEncoder(config)
 	consoleEncoder := zapcore.NewConsoleEncoder(config)
-
-	if d {
-		level = zap.DebugLevel
-	}
 
 	core := zapcore.NewTee(
 		zapcore.NewCore(fileEncoder, zapcore.AddSync(f), level),
