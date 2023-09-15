@@ -7,7 +7,7 @@ import (
 )
 
 func Test_user_storage_hash(t *testing.T) {
-	us := NewUserStorage()
+	us := NewHash()
 
 	firstLevelHash := us.GenerateFirstLevelHash()
 	secondLevelHash := us.GenerateNextLevelHashByPrevious(firstLevelHash, true)
@@ -17,5 +17,4 @@ func Test_user_storage_hash(t *testing.T) {
 	}
 
 	assert.NotEqual(t, firstLevelHash, secondLevelHash)
-
 }

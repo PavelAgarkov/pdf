@@ -2,9 +2,6 @@ package storage
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
-	"github.com/google/uuid"
 	"sync"
 	"time"
 )
@@ -36,7 +33,7 @@ func NewUserData(hash string, files []string, expiredAt time.Time) *UserData {
 	return ud
 }
 
-func NewUserStorage() *UserStorage {
+func NewInMemoryUserStorage() *UserStorage {
 	return &UserStorage{
 		storage: NewMemory(),
 	}
@@ -106,34 +103,4 @@ func (s *UserStorage) Put(key string, value *UserData) (previous *UserData, load
 	}
 
 	return previousUD.(*UserData), ok
-}
-
-// генерируем хэш первого порядка и делаем по нему хэш второго порядка + соль(его записываем в хранилище)
-// - отправляем пользователю хэш первого порядка
-// когда пользователь отправляет его назад(хэш первго порядка), то мы по нему генерируем хэш второго(с солью) и
-// по нему находим в хранилище данные. В итоговую ссылку на скачивание будем добавлять хэш 1-го уровня и название архива
-
-func (s *UserStorage) GenerateNextLevelHashByPrevious(firstHah string, withSalt bool) string {
-	var stringToHash string
-	if withSalt {
-		stringToHash = firstHah + salt
-	} else {
-		stringToHash = firstHah
-	}
-	h := sha256.New()
-	h.Write([]byte(stringToHash))
-	bs := h.Sum(nil)
-	sha256hash := hex.EncodeToString(bs)
-
-	return sha256hash
-}
-
-func (s *UserStorage) GenerateFirstLevelHash() string {
-	uuHash := uuid.New().String()
-	h := sha256.New()
-	h.Write([]byte(uuHash))
-	bs := h.Sum(nil)
-	sha256hashFirst := hex.EncodeToString(bs)
-
-	return sha256hashFirst
 }

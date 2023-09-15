@@ -38,7 +38,7 @@ func runServer() {
 	defer cleanupTasks(loggerFactory)
 	defer loggerFactory.FlushLogs(loggerFactory)
 
-	userStorage := storage.NewUserStorage()
+	userStorage := storage.NewInMemoryUserStorage()
 	userStorage.Run(ctx, storage.Timer)
 
 	route.ServiceRouter(app)
