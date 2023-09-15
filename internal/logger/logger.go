@@ -72,26 +72,26 @@ func (l *Factory) GetLogger(name string) *zap.SugaredLogger {
 }
 
 func (l *Factory) FlushLogs(logger Logger) {
-	fmt.Println("Flush logger")
+	fmt.Println("\nFlush logger ... ")
 	err := logger.GetLogger(PanicName).Sync()
 	if err != nil {
-		fmt.Println("failed buffered panic-logger flash " + err.Error())
+		//fmt.Println("failed buffered panic-logger flash " + err.Error())
 	}
 	err = logger.GetLogger(ErrorName).Sync()
 	if err != nil {
-		fmt.Println("failed buffered err-logger flash " + err.Error())
+		//fmt.Println("failed buffered err-logger flash " + err.Error())
 	}
 	err = logger.GetLogger(WarningName).Sync()
 	if err != nil {
-		fmt.Println("failed buffered warning-logger flash " + err.Error())
+		//fmt.Println("failed buffered warning-logger flash " + err.Error())
 	}
 	err = logger.GetLogger(InfoName).Sync()
 	if err != nil {
-		fmt.Println("failed buffered info-logger flash " + err.Error())
+		//fmt.Println("failed buffered info-logger flash " + err.Error())
 	}
 	err = logger.GetLogger(FrontendName).Sync()
 	if err != nil {
-		fmt.Println("failed buffered frontend-logger flash " + err.Error())
+		//fmt.Println("failed buffered frontend-logger flash " + err.Error())
 	}
 }
 

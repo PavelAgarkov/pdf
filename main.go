@@ -10,6 +10,7 @@ import (
 	"os/signal"
 	"pdf/internal/logger"
 	"pdf/internal/route"
+	"pdf/internal/storage"
 	"sync"
 	"syscall"
 )
@@ -37,9 +38,12 @@ func runServer() {
 	defer cleanupTasks(loggerFactory)
 	defer loggerFactory.FlushLogs(loggerFactory)
 
+	userStorage := storage.NewUserStorage()
+	userStorage.Run(ctx, storage.Timer)
+
 	route.ServiceRouter(app)
-	route.Router(ctx, app, loggerFactory)
-	route.Middleware(app, loggerFactory)
+	route.Router(ctx, app, userStorage, loggerFactory)
+	route.Middleware(app, userStorage, loggerFactory)
 
 	var serverShutdown sync.WaitGroup
 	go func() {
