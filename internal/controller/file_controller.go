@@ -27,7 +27,7 @@ func GetFC() *FileController {
 func (f *FileController) FileController(
 	ctx context.Context,
 	filesPath string,
-	factory *logger.Factory,
+	factory logger.Logger,
 ) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		ctxC, cancel := context.WithTimeout(ctx, 10*time.Second)

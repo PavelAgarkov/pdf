@@ -22,9 +22,6 @@ func main() {
 }
 
 func runServer() {
-	defer recoveryFunction()
-	defer cleanupTasks()
-
 	engine := html.New(FrontendDist, ".html")
 	app := fiber.New(fiber.Config{
 		Views: engine,
@@ -36,6 +33,8 @@ func runServer() {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	loggerFactory := logger.GetLoggerFactory(logger.GetMapLogger())
+	defer recoveryFunction(loggerFactory)
+	defer cleanupTasks(loggerFactory)
 	defer loggerFactory.FlushLogs(loggerFactory)
 
 	route.ServiceRouter(app)
@@ -46,11 +45,10 @@ func runServer() {
 	go func() {
 		_ = <-sig
 		serverShutdown.Add(1)
-		fmt.Println("Gracefully shutting down...")
 		_ = app.ShutdownWithContext(ctx)
 		cancel()
 		serverShutdown.Done()
-		fmt.Println("Server STOPPED")
+		loggerFactory.GetLogger(logger.ErrorName).Error("Gracefully shutting down... Server STOPPED")
 		return
 	}()
 
@@ -67,12 +65,12 @@ func runServer() {
 	return
 }
 
-func recoveryFunction() {
+func recoveryFunction(loggerFactory logger.Logger) {
 	if r := recover(); r != nil {
-		fmt.Println("Recovered. Error:\n", r)
+		loggerFactory.GetLogger(logger.ErrorName).Error("Recovered. Error:\n", r)
 	}
 }
 
-func cleanupTasks() {
-	fmt.Println("Running cleanup tasks...")
+func cleanupTasks(loggerFactory logger.Logger) {
+	loggerFactory.GetLogger(logger.ErrorName).Error("Running cleanup tasks...")
 }

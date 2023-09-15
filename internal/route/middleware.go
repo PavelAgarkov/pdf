@@ -7,7 +7,7 @@ import (
 	"pdf/internal/logger"
 )
 
-func Middleware(app *fiber.App, factory *logger.Factory) {
+func Middleware(app *fiber.App, factory logger.Logger) {
 	faviconMiddleware(app)
 	recoveryHandleRequestMiddleware(app, factory)
 	routs404RedirectMiddleware(app)
@@ -20,7 +20,7 @@ func faviconMiddleware(app *fiber.App) {
 	}))
 }
 
-func recoveryHandleRequestMiddleware(app *fiber.App, factory *logger.Factory) {
+func recoveryHandleRequestMiddleware(app *fiber.App, factory logger.Logger) {
 	app.Use(func(c *fiber.Ctx) error {
 		c.Context()
 		defer func() {

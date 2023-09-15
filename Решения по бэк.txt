@@ -3,3 +3,16 @@
 для email ---> пакее smtp
 для работы с telegram ---> https://core.telegram.org/bots --->  https://github.com/go-telegram-bot-api/telegram-bot-api
 для логирования go.uber.org/zap
+
+	sessionStorage := storage.NewSessionStorage()
+	sessionStorage.Run(ctx, 1*time.Second)
+	ud := storage.NewUserData("222", []string{"./one.txt", "./two.txt"}, time.Now().Add(-10*time.Second))
+	sessionStorage.Insert("first", ud)
+
+	first, ok := sessionStorage.Get("first")
+	fmt.Println(first, ok)
+
+	sessionStorage.ClearAll()
+
+	first, ok = sessionStorage.Get("first")
+	fmt.Println(first, ok)
