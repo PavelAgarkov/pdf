@@ -10,7 +10,8 @@ const salt = "1af1dfa857bf1d8814fe1af898 3c18080019922e557f15a8a"
 const Timer = 5 * time.Minute
 
 type UserData struct {
-	hash      string // это и будет ключ для записи в основное хранилище
+	hash1lvl  Hash1lvl // это и будет ключ для записи в куки
+	hash2lvl  Hash2lvl // это и будет ключ для записи в основное хранилище и для ссылки
 	files     sync.Map
 	expiredAt time.Time
 }
@@ -19,9 +20,10 @@ type UserStorage struct {
 	storage Storage
 }
 
-func NewUserData(hash string, files []string, expiredAt time.Time) *UserData {
+func NewUserData(hash1lvl Hash1lvl, hash2lvl Hash2lvl, files []string, expiredAt time.Time) *UserData {
 	ud := &UserData{
-		hash:      hash,
+		hash1lvl:  hash1lvl,
+		hash2lvl:  hash2lvl,
 		files:     sync.Map{},
 		expiredAt: expiredAt,
 	}

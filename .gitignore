@@ -3,3 +3,4 @@ vendor
 pdf-frontend
 /pdf-frontend/
 /log/**
+/internal/service/files/

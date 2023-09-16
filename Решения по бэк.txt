@@ -16,3 +16,7 @@
 
 	first, ok = sessionStorage.Get("first")
 	fmt.Println(first, ok)
+
+
+	pdfcpu: v0.5.0 dev
+	// CutFile applies cutConf for selected pages of inFile and writes results to outDir.

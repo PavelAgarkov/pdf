@@ -10,20 +10,22 @@ import (
 	"os/signal"
 	"pdf/internal/logger"
 	"pdf/internal/route"
+	"pdf/internal/service"
 	"pdf/internal/storage"
 	"sync"
 	"syscall"
 )
 
-const FrontendDist = "./pdf-frontend/dist"
-const address = ":3000"
+const (
+	address = ":3000"
+)
 
 func main() {
 	runServer()
 }
 
 func runServer() {
-	engine := html.New(FrontendDist, ".html")
+	engine := html.New(service.GenerateFrontendDist(), ".html")
 	app := fiber.New(fiber.Config{
 		Views: engine,
 	})
@@ -41,8 +43,10 @@ func runServer() {
 	userStorage := storage.NewInMemoryUserStorage()
 	userStorage.Run(ctx, storage.Timer)
 
+	pdfAdapter := service.NewPdfAdapter()
+
 	route.ServiceRouter(app)
-	route.Router(ctx, app, userStorage, loggerFactory)
+	route.Router(ctx, app, userStorage, pdfAdapter, loggerFactory)
 	route.Middleware(app, userStorage, loggerFactory)
 
 	var serverShutdown sync.WaitGroup

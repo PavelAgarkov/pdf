@@ -11,33 +11,30 @@ import (
 // когда пользователь отправляет его назад(хэш первго порядка), то мы по нему генерируем хэш второго(с солью) и
 // по нему находим в хранилище данные. В итоговую ссылку на скачивание будем добавлять хэш 1-го уровня и название архива
 
-type Hash struct{}
+type Hash1lvl string
+type Hash2lvl string
 
-func NewHash() *Hash {
-	return &Hash{}
-}
-
-func (hash *Hash) GenerateNextLevelHashByPrevious(firstHah string, withSalt bool) string {
+func GenerateNextLevelHashByPrevious(firstHah Hash1lvl, withSalt bool) Hash2lvl {
 	var stringToHash string
 	if withSalt {
-		stringToHash = firstHah + salt
+		stringToHash = string(firstHah) + salt
 	} else {
-		stringToHash = firstHah
+		stringToHash = string(firstHah)
 	}
-	h := sha256.New()
-	h.Write([]byte(stringToHash))
-	bs := h.Sum(nil)
-	sha256hash := hex.EncodeToString(bs)
+	sha256h := sha256.New()
+	sha256h.Write([]byte(stringToHash))
+	bs := sha256h.Sum(nil)
+	sha256str := hex.EncodeToString(bs)
 
-	return sha256hash
+	return Hash2lvl(sha256str)
 }
 
-func (hash *Hash) GenerateFirstLevelHash() string {
+func GenerateFirstLevelHash() Hash1lvl {
 	uuHash := uuid.New().String()
-	h := sha256.New()
-	h.Write([]byte(uuHash))
-	bs := h.Sum(nil)
-	sha256hashFirst := hex.EncodeToString(bs)
+	sha256h := sha256.New()
+	sha256h.Write([]byte(uuHash))
+	bs := sha256h.Sum(nil)
+	sha256str := hex.EncodeToString(bs)
 
-	return sha256hashFirst
+	return Hash1lvl(sha256str)
 }
