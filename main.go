@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"pdf/internal/logger"
+	"pdf/internal/pdf_operation"
 	"pdf/internal/route"
 	"pdf/internal/service"
 	"pdf/internal/storage"
@@ -44,9 +45,17 @@ func runServer() {
 	userStorage.Run(ctx, storage.Timer)
 
 	pdfAdapter := service.NewPdfAdapter()
+	operationFactory := pdf_operation.NewOperationFactory()
 
 	route.ServiceRouter(app)
-	route.Router(ctx, app, userStorage, pdfAdapter, loggerFactory)
+	route.Router(
+		ctx,
+		app,
+		userStorage,
+		pdfAdapter,
+		operationFactory,
+		loggerFactory,
+	)
 	route.Middleware(app, userStorage, loggerFactory)
 
 	var serverShutdown sync.WaitGroup
