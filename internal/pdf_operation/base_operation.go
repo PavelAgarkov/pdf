@@ -1,53 +1,74 @@
 package pdf_operation
 
 import (
-	"pdf/internal/service"
-	"pdf/internal/storage"
+	"pdf/internal"
+	"pdf/internal/adapter"
 	"slices"
 	"strconv"
 	"sync"
 )
 
+//		 		expired
+//		   		/\
+//	       		|
+//
+// started->processed->awaiting_download->completed
+//
+//	   			|
+//	  			\/
+//			canceled
+
 const (
-	DestinationMerge       = "merge"
-	DestinationSplit       = "split"
-	DestinationCut         = "cut"
-	DestinationRemovePages = "remove_pages"
+	StatusStarted          = "started"
+	StatusProcessed        = "processed"
+	StatusCompleted        = "completed"
+	StatusExpired          = "expired"
+	StatusCanceled         = "canceled"
+	StatusAwaitingDownload = "awaiting_download"
 )
 
 type Operation interface {
 	GetBaseOperation() *BaseOperation
-	Execute(pdfAdapter *service.PdfAdapter) error
+	Execute(locator *adapter.Locator) error
+	GetDestination() string
 }
 
 // назначение операции - разделение файла, мерж файлов, сжатие и что придумаем еще
 
 type Destination string
+type OperationStatus string
+type StoppedReason string
 
 // тут записана операция, которую делает пользователь.
 //Это нужно если пользователь решил на пол пути делать новую операцию(например хотел соединить, а потом решил разъединить).
 //Это нужно для отмены его старых данных и удобства работы с ними
 
 type BaseOperation struct {
-	ud          *storage.UserData
-	files       sync.Map
-	dirPathFile service.DirPathFile // путь до директории файла
-	outDir      service.OutDir
-	destination Destination
+	configuration *OperationConfiguration // конфигурации для выполнения операций, например диапазоны разбиения файла
+	ud            *internal.UserData
+	files         sync.Map
+	dirPathFile   adapter.DirPathFile // путь до директории файла
+	outDir        adapter.OutDir
+	destination   Destination
+	status        OperationStatus //статус операции нужен для контоля отмены токена и очистки памяти
+	stoppedReason StoppedReason
 }
 
 func NewBaseOperation(
-	ud *storage.UserData,
+	configuration *OperationConfiguration,
+	ud *internal.UserData,
 	files []string,
-	dirPathFile service.DirPathFile,
-	outDIr service.OutDir,
+	dirPathFile adapter.DirPathFile,
+	outDIr adapter.OutDir,
 	destination Destination,
 ) *BaseOperation {
 	bo := &BaseOperation{
-		ud:          ud,
-		dirPathFile: dirPathFile,
-		outDir:      outDIr,
-		destination: destination,
+		configuration: configuration,
+		ud:            ud,
+		dirPathFile:   dirPathFile,
+		outDir:        outDIr,
+		destination:   destination,
+		status:        OperationStatus(StatusStarted),
 	}
 
 	for k, filename := range files {
@@ -71,4 +92,32 @@ func (bo *BaseOperation) GetAllPaths() []string {
 	})
 
 	return paths
+}
+
+func (bo *BaseOperation) GetConfiguration() *OperationConfiguration {
+	return bo.configuration
+}
+
+func (bo *BaseOperation) GetUserData() *internal.UserData {
+	return bo.ud
+}
+
+func (bo *BaseOperation) GetStatus() OperationStatus {
+	return bo.status
+}
+
+func (bo *BaseOperation) CanDeleted() bool {
+	return bo.GetStatus() == StatusExpired ||
+		bo.GetStatus() == StatusCanceled ||
+		bo.GetStatus() == StatusCompleted
+}
+
+func (bo *BaseOperation) SetStatus(status OperationStatus) *BaseOperation {
+	bo.status = status
+	return bo
+}
+
+func (bo *BaseOperation) SetStoppedReason(reason StoppedReason) *BaseOperation {
+	bo.stoppedReason = reason
+	return bo
 }

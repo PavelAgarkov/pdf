@@ -2,7 +2,11 @@ package pdf_operation
 
 import (
 	"errors"
-	"pdf/internal/service"
+	"pdf/internal/adapter"
+)
+
+const (
+	DestinationCut = "cut"
 )
 
 type CutOperation struct {
@@ -15,10 +19,14 @@ func NewCutOperation(
 	return &CutOperation{baseOperation: bo}
 }
 
+func (so *CutOperation) GetDestination() string {
+	return DestinationCut
+}
+
 func (so *CutOperation) GetBaseOperation() *BaseOperation {
 	return so.baseOperation
 }
 
-func (so *CutOperation) Execute(pdfAdapter *service.PdfAdapter) error {
+func (so *CutOperation) Execute(locator *adapter.Locator) error {
 	return errors.New("cut_operation")
 }

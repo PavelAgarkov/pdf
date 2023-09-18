@@ -3,11 +3,10 @@ package route
 import (
 	"context"
 	"github.com/gofiber/fiber/v2"
+	"pdf/internal/adapter"
 	"pdf/internal/controller"
 	"pdf/internal/logger"
 	"pdf/internal/pdf_operation"
-	"pdf/internal/service"
-	"pdf/internal/storage"
 )
 
 const FilesPath = "./files/"
@@ -17,11 +16,11 @@ const FrontendAssets = "./pdf-frontend/dist/assets/"
 func Router(
 	ctx context.Context,
 	app *fiber.App,
-	userStorage *storage.UserStorage,
-	pdfAdapter *service.PdfAdapter,
+	operationStorage *pdf_operation.OperationStorage,
 	operationFactory *pdf_operation.OperationsFactory,
-	factory logger.Logger,
+	adapterLocator *adapter.Locator,
+	loggerFactory logger.Logger,
 ) {
-	app.Get("/download/:filename", controller.GetFC().FileController(ctx, FilesPath, factory)).
+	app.Get("/download/:filename", controller.GetFC().FileController(ctx, FilesPath, loggerFactory)).
 		Name("file-download")
 }

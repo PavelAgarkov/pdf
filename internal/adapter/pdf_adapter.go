@@ -1,14 +1,22 @@
-package service
+package adapter
 
 import (
 	"fmt"
 	"github.com/pdfcpu/pdfcpu/pkg/api"
 )
 
+const (
+	PdfAlias = "pdf"
+)
+
 type PdfAdapter struct{}
 
 func NewPdfAdapter() *PdfAdapter {
 	return &PdfAdapter{}
+}
+
+func (pdfAdapter *PdfAdapter) GetAlias() string {
+	return PdfAlias
 }
 
 func (pdfAdapter *PdfAdapter) MergeFiles(inFiles []string, outFile string) error {

@@ -1,8 +1,8 @@
 package pdf_operation
 
 import (
-	"pdf/internal/service"
-	"pdf/internal/storage"
+	"pdf/internal"
+	"pdf/internal/adapter"
 )
 
 type OperationsFactory struct{}
@@ -11,14 +11,15 @@ func NewOperationFactory() *OperationsFactory {
 	return &OperationsFactory{}
 }
 
-func (*OperationsFactory) GetNewOperation(
-	ud *storage.UserData,
+func (*OperationsFactory) CreateNewOperation(
+	configuration *OperationConfiguration,
+	ud *internal.UserData,
 	files []string,
-	dirPathFile service.DirPathFile,
-	outDit service.OutDir,
+	dirPathFile adapter.DirPathFile,
+	outDit adapter.OutDir,
 	destination string,
 ) Operation {
-	bo := NewBaseOperation(ud, files, dirPathFile, outDit, Destination(destination))
+	bo := NewBaseOperation(configuration, ud, files, dirPathFile, outDit, Destination(destination))
 
 	switch destination {
 	case DestinationMerge:
@@ -29,6 +30,8 @@ func (*OperationsFactory) GetNewOperation(
 		return NewCutOperation(bo)
 	case DestinationRemovePages:
 		return NewRemovePagesOperation(bo)
+	case DestinationDownload:
+		return NewDownloadOperation(bo)
 	default:
 		return nil
 	}
