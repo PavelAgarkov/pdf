@@ -47,7 +47,8 @@ type BaseOperation struct {
 	configuration *OperationConfiguration // конфигурации для выполнения операций, например диапазоны разбиения файла
 	ud            *internal.UserData
 	files         sync.Map
-	dirPathFile   adapter.DirPathFile // путь до директории файла
+	dirPathFile   adapter.DirPath // путь до директории файла
+	inDir         adapter.InDir
 	outDir        adapter.OutDir
 	destination   Destination
 	status        OperationStatus //статус операции нужен для контоля отмены токена и очистки памяти
@@ -58,7 +59,8 @@ func NewBaseOperation(
 	configuration *OperationConfiguration,
 	ud *internal.UserData,
 	files []string,
-	dirPathFile adapter.DirPathFile,
+	dirPathFile adapter.DirPath,
+	idDir adapter.InDir,
 	outDIr adapter.OutDir,
 	destination Destination,
 ) *BaseOperation {
@@ -67,6 +69,7 @@ func NewBaseOperation(
 		ud:            ud,
 		dirPathFile:   dirPathFile,
 		outDir:        outDIr,
+		inDir:         idDir,
 		destination:   destination,
 		status:        OperationStatus(StatusStarted),
 	}

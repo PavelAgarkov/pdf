@@ -26,3 +26,11 @@ func NewUserData(
 func (ud *UserData) GetExpiredAt() time.Time {
 	return ud.expiredAt
 }
+
+func (ud *UserData) GetHash1Lvl() storage2.Hash1lvl {
+	return ud.hash1lvl
+}
+
+func (ud *UserData) GetHash2Lvl() storage2.Hash2lvl {
+	return ud.hash2lvl
+}

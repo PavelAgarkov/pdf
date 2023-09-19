@@ -11,9 +11,11 @@ type Locator struct {
 	paAlias     string
 	pdfAdapter  *PdfAdapter
 	pdfaAlias   string
+	rarAdapter  *RarAdapter
+	rarAlias    string
 }
 
-func NewAdapterLocator(fileAdapter *FileAdapter, pathAdapter *PathAdapter, pdfAdapter *PdfAdapter) *Locator {
+func NewAdapterLocator(fileAdapter *FileAdapter, pathAdapter *PathAdapter, pdfAdapter *PdfAdapter, rarAdapter *RarAdapter) *Locator {
 	return &Locator{
 		fileAdapter: fileAdapter,
 		faAlias:     fileAdapter.GetAlias(),
@@ -21,6 +23,8 @@ func NewAdapterLocator(fileAdapter *FileAdapter, pathAdapter *PathAdapter, pdfAd
 		paAlias:     pathAdapter.GetAlias(),
 		pdfAdapter:  pdfAdapter,
 		pdfaAlias:   pdfAdapter.GetAlias(),
+		rarAdapter:  rarAdapter,
+		rarAlias:    rarAdapter.GetAlias(),
 	}
 }
 
@@ -32,6 +36,9 @@ func (l *Locator) Locate(alias string) Adapter {
 		return l.pathAdapter
 	case PdfAlias:
 		return l.pdfAdapter
+	case RarAlias:
+		return l.rarAdapter
+
 	default:
 		return nil
 	}

@@ -29,6 +29,7 @@ func runServer() {
 		adapter.NewFileAdapter(),
 		adapter.NewPathAdapter(),
 		adapter.NewPdfAdapter(),
+		adapter.NewRarAdapterAdapter(),
 	)
 	engine := html.New(adapterLocator.Locate(adapter.PathAlias).(*adapter.PathAdapter).GenerateFrontendDist(), ".html")
 	app := fiber.New(fiber.Config{

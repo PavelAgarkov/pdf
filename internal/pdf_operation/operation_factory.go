@@ -15,23 +15,21 @@ func (*OperationsFactory) CreateNewOperation(
 	configuration *OperationConfiguration,
 	ud *internal.UserData,
 	files []string,
-	dirPathFile adapter.DirPathFile,
+	dirPathFile adapter.DirPath,
+	inDir adapter.InDir,
 	outDit adapter.OutDir,
-	destination string,
+	splitPath adapter.SplitDir,
+	destination Destination,
 ) Operation {
-	bo := NewBaseOperation(configuration, ud, files, dirPathFile, outDit, Destination(destination))
+	bo := NewBaseOperation(configuration, ud, files, dirPathFile, inDir, outDit, destination)
 
 	switch destination {
 	case DestinationMerge:
 		return NewMergeOperation(bo)
 	case DestinationSplit:
-		return NewSplitOperation(bo)
-	case DestinationCut:
-		return NewCutOperation(bo)
+		return NewSplitOperation(bo, splitPath)
 	case DestinationRemovePages:
 		return NewRemovePagesOperation(bo)
-	case DestinationDownload:
-		return NewDownloadOperation(bo)
 	default:
 		return nil
 	}

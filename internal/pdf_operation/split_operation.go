@@ -3,7 +3,9 @@ package pdf_operation
 import (
 	"errors"
 	"fmt"
+	"github.com/pdfcpu/pdfcpu/pkg/api"
 	"pdf/internal/adapter"
+	"slices"
 )
 
 const (
@@ -12,16 +14,21 @@ const (
 
 type SplitOperation struct {
 	baseOperation *BaseOperation
+	splitDir      adapter.SplitDir
 }
 
 func NewSplitOperation(
 	bo *BaseOperation,
+	splitDir adapter.SplitDir,
 ) *SplitOperation {
-	return &SplitOperation{baseOperation: bo}
+	return &SplitOperation{
+		baseOperation: bo,
+		splitDir:      splitDir,
+	}
 }
 
 func (so *SplitOperation) GetDestination() string {
-	return DestinationDownload
+	return DestinationSplit
 }
 
 func (so *SplitOperation) GetBaseOperation() *BaseOperation {
@@ -36,7 +43,7 @@ func (so *SplitOperation) Execute(locator *adapter.Locator) error {
 
 	splitIntervals := bo.GetConfiguration().GetSplitIntervals()
 	if splitIntervals == nil {
-		err := errors.New("can't execute operation split, no intervals: %w")
+		err := errors.New("can't execute operation SPLIT, no intervals: %w")
 		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(err.Error()))
 		return err
 	}
@@ -44,21 +51,42 @@ func (so *SplitOperation) Execute(locator *adapter.Locator) error {
 	allPaths := bo.GetAllPaths()
 
 	if len(allPaths) > 1 {
-		err := errors.New("operation split can't have more 1 file")
+		err := errors.New("operation SPLIT can't have more 1 file")
 		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(err.Error()))
 		return err
 	}
 
-	inFile := allPaths[0]
+	firstFile := allPaths[0]
 
-	pdfAdapter := locator.Locate(adapter.PdfAlias).(*adapter.PdfAdapter)
-	err := pdfAdapter.SplitFile(inFile, string(bo.outDir))
+	pathAdapter := locator.Locate(adapter.PathAlias).(*adapter.PathAdapter)
+	_, file, err := pathAdapter.StepBack(adapter.Path(firstFile))
 
-	if err != nil {
-		wrapErr := fmt.Errorf("can't execute operation split to file %s: %w", inFile, err)
+	inFile := string(bo.inDir) + file
+
+	many, intervals := bo.GetConfiguration().parseIntervals(splitIntervals)
+	pageCount, err := api.PageCountFile(inFile)
+	maxValue := slices.Max(many)
+
+	if err != nil || pageCount < maxValue {
+		wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: page coun less interval %w", inFile, err)
 		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(wrapErr.Error()))
 		return wrapErr
 	}
+
+	fmt.Println(intervals)
+
+	pdfAdapter := locator.Locate(adapter.PdfAlias).(*adapter.PdfAdapter)
+	err = pdfAdapter.SplitFile(inFile, string(so.splitDir))
+
+	if err != nil {
+		wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: %w", inFile, err)
+		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(wrapErr.Error()))
+		return wrapErr
+	}
+
+	// собрать по intervals файлы из директории
+
+	// работа по архивации
 
 	// поле этого кода в контроллере нужно будет провести работу с архивом, данных из so хватает
 	// после окончания операции, нужно внести данные в хранилище операций. Объекты будут вноситься
