@@ -7,12 +7,10 @@ import (
 )
 
 func Test_user_storage_hash(t *testing.T) {
-	us := NewHash()
+	firstLevelHash := GenerateFirstLevelHash()
+	secondLevelHash := GenerateNextLevelHashByPrevious(firstLevelHash, true)
 
-	firstLevelHash := us.GenerateFirstLevelHash()
-	secondLevelHash := us.GenerateNextLevelHashByPrevious(firstLevelHash, true)
-
-	if firstLevelHash != secondLevelHash {
+	if string(firstLevelHash) != string(secondLevelHash) {
 		fmt.Println(firstLevelHash, secondLevelHash)
 	}
 

@@ -24,7 +24,7 @@ frontend_build() {
 }
 
 
-command="$1"
+operation="$1"
 if [[ -z "$command" ]]; then
     using
     exit 0

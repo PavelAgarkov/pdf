@@ -10,8 +10,8 @@ import (
 	"time"
 )
 
-type FileController struct {
-}
+type FileController struct{}
+
 type Response struct {
 	str string
 }
@@ -36,7 +36,7 @@ func (f *FileController) FileController(
 		cr := make(chan ResponseInterface)
 		start := make(chan struct{})
 
-		factory.GetLogger(logger.ErrorName).Error("Panice")
+		factory.GetLogger(logger.ErrorName).Error("Error")
 		filename := filesPath + c.Params("filename")
 		go realHandler(start, cr, filename)
 

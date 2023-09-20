@@ -8,22 +8,30 @@ import (
 	"go.uber.org/zap"
 	"os"
 	"os/signal"
+	"pdf/internal/adapter"
 	"pdf/internal/logger"
+	"pdf/internal/pdf_operation"
 	"pdf/internal/route"
-	"pdf/internal/storage"
 	"sync"
 	"syscall"
 )
 
-const FrontendDist = "./pdf-frontend/dist"
-const address = ":3000"
+const (
+	address = ":3000"
+)
 
 func main() {
 	runServer()
 }
 
 func runServer() {
-	engine := html.New(FrontendDist, ".html")
+	adapterLocator := adapter.NewAdapterLocator(
+		adapter.NewFileAdapter(),
+		adapter.NewPathAdapter(),
+		adapter.NewPdfAdapter(),
+		adapter.NewRarAdapterAdapter(),
+	)
+	engine := html.New(adapterLocator.Locate(adapter.PathAlias).(*adapter.PathAdapter).GenerateFrontendDist(), ".html")
 	app := fiber.New(fiber.Config{
 		Views: engine,
 	})
@@ -34,16 +42,26 @@ func runServer() {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	loggerFactory := logger.GetLoggerFactory(logger.GetMapLogger())
+
 	defer recoveryFunction(loggerFactory)
 	defer cleanupTasks(loggerFactory)
 	defer loggerFactory.FlushLogs(loggerFactory)
 
-	userStorage := storage.NewInMemoryUserStorage()
-	userStorage.Run(ctx, storage.Timer)
+	operationStorage := pdf_operation.NewInMemoryOperationStorage()
+	operationStorage.Run(ctx, pdf_operation.Timer)
+
+	operationFactory := pdf_operation.NewOperationFactory()
 
 	route.ServiceRouter(app)
-	route.Router(ctx, app, userStorage, loggerFactory)
-	route.Middleware(app, userStorage, loggerFactory)
+	route.Router(
+		ctx,
+		app,
+		operationStorage,
+		operationFactory,
+		adapterLocator,
+		loggerFactory,
+	)
+	route.Middleware(app, operationStorage, loggerFactory)
 
 	var serverShutdown sync.WaitGroup
 	go func() {

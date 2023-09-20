@@ -5,10 +5,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/favicon"
 	"pdf/internal/logger"
-	"pdf/internal/storage"
+	"pdf/internal/pdf_operation"
 )
 
-func Middleware(app *fiber.App, us *storage.UserStorage, factory logger.Logger) {
+func Middleware(app *fiber.App, operationStorage *pdf_operation.OperationStorage, factory logger.Logger) {
 	faviconMiddleware(app)
 	recoveryHandleRequestMiddleware(app, factory)
 	routs404RedirectMiddleware(app)
