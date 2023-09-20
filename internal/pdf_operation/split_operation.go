@@ -92,44 +92,12 @@ func (so *SplitOperation) Execute(locator *adapter.Locator) error {
 		return wrapErr
 	}
 
-	for k, interval := range intervals {
-		outFile := string(bo.outDir) + string(bo.GetUserData().GetHash1Lvl()) + "_" + splitIntervals[k] + ".pdf"
-		forMerge := make([]string, 0)
-		fileIndex := 0
+	err = so.mergeFiles(pathAdapter, pdfAdapter, splitEntries, intervals, splitIntervals, inFile)
 
-		for index := interval[0]; index <= interval[1]; index++ {
-			cast := strconv.Itoa(index)
-			find, ok := splitEntries[cast]
-			if !ok {
-				wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: can't get from map  %w", inFile, err)
-				bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(wrapErr.Error()))
-				return wrapErr
-			}
-
-			_, newPath, err := pathAdapter.StepForward(adapter.Path(so.splitDir), find)
-			if err != nil {
-				wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: can't build filepath  %w", inFile, err)
-				bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(wrapErr.Error()))
-				return wrapErr
-			}
-
-			forMerge = slices.Insert(forMerge, fileIndex, string(newPath))
-			fileIndex++
-		}
-
-		err = pdfAdapter.MergeFiles(forMerge, outFile)
-		if err != nil {
-			wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: can't MERGE  %w", inFile, err)
-			bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(wrapErr.Error()))
-			return wrapErr
-		}
-
-		err = pdfAdapter.Optimize(outFile, outFile)
-		if err != nil {
-			wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: can't MERGE  %w", inFile, err)
-			bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(wrapErr.Error()))
-			return wrapErr
-		}
+	if err != nil {
+		wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: cant read out dir  %w", inFile, err)
+		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(wrapErr.Error()))
+		return wrapErr
 	}
 
 	outEntries, err := fileAdapter.GetAllEntriesFromDir(string(bo.outDir), ".pdf")
@@ -151,5 +119,53 @@ func (so *SplitOperation) Execute(locator *adapter.Locator) error {
 	// в хранилище при создании операции, затем обновляться во время выполнения (processed, canceled,
 
 	bo.SetStatus(StatusAwaitingDownload)
+	return nil
+}
+
+func (so *SplitOperation) mergeFiles(
+	pathAdapter *adapter.PathAdapter,
+	pdfAdapter *adapter.PdfAdapter,
+	splitEntries map[string]string,
+	intervals [][]int,
+	splitIntervals []string,
+	inFile string,
+) error {
+	bo := so.GetBaseOperation()
+	for k, interval := range intervals {
+		outFile := string(bo.outDir) + string(bo.GetUserData().GetHash1Lvl()) + "_" + splitIntervals[k] + ".pdf"
+		forMerge := make([]string, 0)
+		fileIndex := 0
+
+		for index := interval[0]; index <= interval[1]; index++ {
+			cast := strconv.Itoa(index)
+			find, ok := splitEntries[cast]
+			if !ok {
+				wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: can't get from map", inFile)
+				return wrapErr
+			}
+
+			_, newPath, err := pathAdapter.StepForward(adapter.Path(so.splitDir), find)
+			if err != nil {
+				wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: can't build filepath  %w", inFile, err)
+				return wrapErr
+			}
+
+			forMerge = slices.Insert(forMerge, fileIndex, string(newPath))
+			fileIndex++
+		}
+
+		err := pdfAdapter.MergeFiles(forMerge, outFile)
+		if err != nil {
+			wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: can't MERGE  %w", inFile, err)
+			return wrapErr
+		}
+
+		err = pdfAdapter.Optimize(outFile, outFile)
+		if err != nil {
+			wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: can't MERGE  %w", inFile, err)
+			return wrapErr
+		}
+	}
+
 	return nil
 }
