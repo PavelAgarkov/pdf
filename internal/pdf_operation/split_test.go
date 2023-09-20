@@ -28,7 +28,7 @@ func Test_split(t *testing.T) {
 	inDir := pathAdapter.GenerateInDirPath(secondLevelHash)
 	dirPath := pathAdapter.GenerateDirPathToFiles(secondLevelHash)
 	outDir := pathAdapter.GenerateOutDirPath(secondLevelHash)
-	splitDit := pathAdapter.GenerateDirPathToSplitFiles(secondLevelHash)
+	splitDir := pathAdapter.GenerateDirPathToSplitFiles(secondLevelHash)
 
 	ud := internal.NewUserData(firstLevelHash, secondLevelHash, expired)
 
@@ -42,11 +42,11 @@ func Test_split(t *testing.T) {
 	err := fileAdapter.CreateDir(string(dirPath), 0777)
 	err = fileAdapter.CreateDir(string(inDir), 0777)
 	err = fileAdapter.CreateDir(string(outDir), 0777)
-	err = fileAdapter.CreateDir(string(splitDit), 0777)
+	err = fileAdapter.CreateDir(string(splitDir), 0777)
 	err = os.WriteFile(string(inDir)+file0, f, 0777)
 
 	operationFactory := NewOperationFactory()
-	mergePagesOperation := operationFactory.CreateNewOperation(conf, ud, files, dirPath, inDir, outDir, splitDit, DestinationSplit)
+	mergePagesOperation := operationFactory.CreateNewOperation(conf, ud, files, dirPath, inDir, outDir, splitDir, DestinationSplit)
 
 	err = mergePagesOperation.Execute(adapterLocator)
 

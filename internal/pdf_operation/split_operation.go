@@ -6,6 +6,7 @@ import (
 	"github.com/pdfcpu/pdfcpu/pkg/api"
 	"pdf/internal/adapter"
 	"slices"
+	"strconv"
 )
 
 const (
@@ -73,8 +74,6 @@ func (so *SplitOperation) Execute(locator *adapter.Locator) error {
 		return wrapErr
 	}
 
-	fmt.Println(intervals)
-
 	pdfAdapter := locator.Locate(adapter.PdfAlias).(*adapter.PdfAdapter)
 	err = pdfAdapter.SplitFile(inFile, string(so.splitDir))
 
@@ -83,6 +82,65 @@ func (so *SplitOperation) Execute(locator *adapter.Locator) error {
 		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(wrapErr.Error()))
 		return wrapErr
 	}
+
+	fileAdapter := locator.Locate(adapter.FileAlias).(*adapter.FileAdapter)
+	splitEntries, err := fileAdapter.GetAllEntriesFromDir(string(so.splitDir), ".pdf")
+
+	if err != nil {
+		wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: cant read split dir  %w", inFile, err)
+		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(wrapErr.Error()))
+		return wrapErr
+	}
+
+	for k, interval := range intervals {
+		outFile := string(bo.outDir) + string(bo.GetUserData().GetHash1Lvl()) + "_" + splitIntervals[k] + ".pdf"
+		forMerge := make([]string, 0)
+		fileIndex := 0
+
+		for index := interval[0]; index <= interval[1]; index++ {
+			cast := strconv.Itoa(index)
+			find, ok := splitEntries[cast]
+			if !ok {
+				wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: can't get from map  %w", inFile, err)
+				bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(wrapErr.Error()))
+				return wrapErr
+			}
+
+			_, newPath, err := pathAdapter.StepForward(adapter.Path(so.splitDir), find)
+			if err != nil {
+				wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: can't build filepath  %w", inFile, err)
+				bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(wrapErr.Error()))
+				return wrapErr
+			}
+
+			forMerge = slices.Insert(forMerge, fileIndex, string(newPath))
+			fileIndex++
+		}
+
+		err = pdfAdapter.MergeFiles(forMerge, outFile)
+		if err != nil {
+			wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: can't MERGE  %w", inFile, err)
+			bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(wrapErr.Error()))
+			return wrapErr
+		}
+
+		err = pdfAdapter.Optimize(outFile, outFile)
+		if err != nil {
+			wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: can't MERGE  %w", inFile, err)
+			bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(wrapErr.Error()))
+			return wrapErr
+		}
+	}
+
+	outEntries, err := fileAdapter.GetAllEntriesFromDir(string(bo.outDir), ".pdf")
+
+	if err != nil {
+		wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: cant read out dir  %w", inFile, err)
+		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(wrapErr.Error()))
+		return wrapErr
+	}
+
+	fmt.Println(outEntries)
 
 	// собрать по intervals файлы из директории
 
