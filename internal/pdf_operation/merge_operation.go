@@ -20,7 +20,7 @@ func NewMergeOperation(
 	return &MergeOperation{baseOperation: bo}
 }
 
-func (do *MergeOperation) GetDestination() string {
+func (mo *MergeOperation) GetDestination() string {
 	return DestinationMerge
 }
 
@@ -32,16 +32,9 @@ func (mo *MergeOperation) Execute(locator *adapter.Locator) error {
 	bo := mo.GetBaseOperation()
 	bo.SetStatus(StatusProcessed)
 
-	//mergeOrder := bo.GetConfiguration().GetMergeOrder()
-	//if mergeOrder == nil {
-	//	err := errors.New("can't execute operation MERGE, no merge order: %w")
-	//	bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(err.Error()))
-	//	return err
-	//}
+	inFiles := bo.GetAllPaths()
 
-	allPaths := bo.GetAllPaths()
-
-	if len(allPaths) <= 1 {
+	if len(inFiles) <= 1 {
 		err := errors.New("operation MERGE can't have less 1 file")
 		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(err.Error()))
 		return err
@@ -50,10 +43,10 @@ func (mo *MergeOperation) Execute(locator *adapter.Locator) error {
 	outFile := string(bo.outDir) + string(bo.GetUserData().GetHash1Lvl()) + ".pdf"
 
 	pdfAdapter := locator.Locate(adapter.PdfAlias).(*adapter.PdfAdapter)
-	err := pdfAdapter.MergeFiles(allPaths, outFile)
+	err := pdfAdapter.MergeFiles(inFiles, outFile)
 
 	if err != nil {
-		wrapErr := fmt.Errorf("can't execute operation MERGE to files %s: %w", allPaths, err)
+		wrapErr := fmt.Errorf("can't execute operation MERGE to files %s: %w", inFiles, err)
 		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(wrapErr.Error()))
 		return wrapErr
 	}

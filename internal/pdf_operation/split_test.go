@@ -32,24 +32,21 @@ func Test_split(t *testing.T) {
 
 	ud := internal.NewUserData(firstLevelHash, secondLevelHash, expired)
 
-	files := []string{"./files/ServiceAgreement_template.pdf"}
+	filesForReplace := []string{"./files/ServiceAgreement_template.pdf"}
+	_, file0, _ := pathAdapter.StepBack(adapter.Path(filesForReplace[0]))
+	f, _ := os.ReadFile(filesForReplace[0])
 
-	_, file0, _ := pathAdapter.StepBack(adapter.Path(files[0]))
-	//_, file1, _ := pathAdapter.StepBack(adapter.Path(files[1]))
-
-	operationFactory := NewOperationFactory()
-	mergePagesOperation := operationFactory.CreateNewOperation(conf, ud, files, dirPath, inDir, outDir, splitDit, DestinationSplit)
-
-	f, _ := os.ReadFile(files[0])
+	files := []string{string(inDir) + file0}
 
 	fileAdapter := adapterLocator.Locate(adapter.FileAlias).(*adapter.FileAdapter)
 	err := fileAdapter.CreateDir(string(dirPath), 0777)
 	err = fileAdapter.CreateDir(string(inDir), 0777)
 	err = fileAdapter.CreateDir(string(outDir), 0777)
 	err = fileAdapter.CreateDir(string(splitDit), 0777)
-
 	err = os.WriteFile(string(inDir)+file0, f, 0777)
-	//err = os.WriteFile(string(inDir)+file1, f, 0777)
+
+	operationFactory := NewOperationFactory()
+	mergePagesOperation := operationFactory.CreateNewOperation(conf, ud, files, dirPath, inDir, outDir, splitDit, DestinationSplit)
 
 	err = mergePagesOperation.Execute(adapterLocator)
 

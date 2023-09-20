@@ -31,21 +31,20 @@ func Test_remove_pages(t *testing.T) {
 
 	ud := internal.NewUserData(firstLevelHash, secondLevelHash, expired)
 
-	files := []string{"./files/ServiceAgreement_template.pdf"}
+	filesForReplace := []string{"./files/ServiceAgreement_template.pdf"}
+	_, file, _ := pathAdapter.StepBack(adapter.Path(filesForReplace[0]))
+	f, _ := os.ReadFile(filesForReplace[0])
 
-	_, file, _ := pathAdapter.StepBack(adapter.Path(files[0]))
-
-	operationFactory := NewOperationFactory()
-	removePagesOperation := operationFactory.CreateNewOperation(conf, ud, files, dirPath, inDir, outDir, "", DestinationRemovePages)
-
-	f, _ := os.ReadFile(files[0])
+	files := []string{string(inDir) + file}
 
 	fileAdapter := adapterLocator.Locate(adapter.FileAlias).(*adapter.FileAdapter)
 	err := fileAdapter.CreateDir(string(dirPath), 0777)
 	err = fileAdapter.CreateDir(string(inDir), 0777)
 	err = fileAdapter.CreateDir(string(outDir), 0777)
-
 	err = os.WriteFile(string(inDir)+file, f, 0777)
+
+	operationFactory := NewOperationFactory()
+	removePagesOperation := operationFactory.CreateNewOperation(conf, ud, files, dirPath, inDir, outDir, "", DestinationRemovePages)
 
 	err = removePagesOperation.Execute(adapterLocator)
 

@@ -29,25 +29,25 @@ func Test_cut(t *testing.T) {
 	dirPath := pathAdapter.GenerateDirPathToFiles(secondLevelHash)
 	outDir := pathAdapter.GenerateOutDirPath(secondLevelHash)
 
-	ud := internal.NewUserData(firstLevelHash, secondLevelHash, expired)
+	filesForReplace := []string{"./files/ServiceAgreement_template.pdf", "./files/ServiceAgreement_template.pdf"}
 
-	files := []string{"./files/ServiceAgreement_template.pdf", "./files/ServiceAgreement_template.pdf"}
-
-	_, file0, _ := pathAdapter.StepBack(adapter.Path(files[0]))
-	_, file1, _ := pathAdapter.StepBack(adapter.Path(files[1]))
-
-	operationFactory := NewOperationFactory()
-	mergePagesOperation := operationFactory.CreateNewOperation(conf, ud, files, dirPath, inDir, outDir, "", DestinationMerge)
-
-	f, _ := os.ReadFile(files[0])
+	_, file0, _ := pathAdapter.StepBack(adapter.Path(filesForReplace[0]))
+	_, file1, _ := pathAdapter.StepBack(adapter.Path(filesForReplace[1]))
+	f0, _ := os.ReadFile(filesForReplace[0])
+	f1, _ := os.ReadFile(filesForReplace[1])
 
 	fileAdapter := adapterLocator.Locate(adapter.FileAlias).(*adapter.FileAdapter)
 	err := fileAdapter.CreateDir(string(dirPath), 0777)
 	err = fileAdapter.CreateDir(string(inDir), 0777)
 	err = fileAdapter.CreateDir(string(outDir), 0777)
+	err = os.WriteFile(string(inDir)+file0, f0, 0777)
+	err = os.WriteFile(string(inDir)+file1, f1, 0777)
 
-	err = os.WriteFile(string(inDir)+file0, f, 0777)
-	err = os.WriteFile(string(inDir)+file1, f, 0777)
+	files := []string{string(inDir) + file0, string(inDir) + file1}
+	ud := internal.NewUserData(firstLevelHash, secondLevelHash, expired)
+
+	operationFactory := NewOperationFactory()
+	mergePagesOperation := operationFactory.CreateNewOperation(conf, ud, files, dirPath, inDir, outDir, "", DestinationMerge)
 
 	err = mergePagesOperation.Execute(adapterLocator)
 

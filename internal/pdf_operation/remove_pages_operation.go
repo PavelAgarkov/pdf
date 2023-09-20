@@ -47,11 +47,16 @@ func (rpo *RemovePagesOperation) Execute(locator *adapter.Locator) error {
 		return err
 	}
 
-	inFile := allPaths[0]
+	firstFile := allPaths[0]
+
+	pathAdapter := locator.Locate(adapter.PathAlias).(*adapter.PathAdapter)
+	_, file, err := pathAdapter.StepBack(adapter.Path(firstFile))
+
+	inFile := string(bo.inDir) + file
 
 	outFile := string(bo.outDir) + string(bo.GetUserData().GetHash1Lvl()) + ".pdf"
 	pdfAdapter := locator.Locate(adapter.PdfAlias).(*adapter.PdfAdapter)
-	err := pdfAdapter.RemovePagesFile(inFile, outFile, removeIntervals)
+	err = pdfAdapter.RemovePagesFile(inFile, outFile, removeIntervals)
 
 	if err != nil {
 		wrapErr := fmt.Errorf("can't execute operation REMOVE_PAGES to file %s: %w", inFile, err)
