@@ -23,11 +23,12 @@ func Test_remove_pages(t *testing.T) {
 
 	firstLevelHash := storage.GenerateFirstLevelHash()
 	secondLevelHash := storage.GenerateNextLevelHashByPrevious(firstLevelHash, true)
-	expired := time.Now().Add(Timer)
+	expired := time.Now().Add(Timer5)
 
 	inDir := pathAdapter.GenerateInDirPath(secondLevelHash)
 	dirPath := pathAdapter.GenerateDirPathToFiles(secondLevelHash)
 	outDir := pathAdapter.GenerateOutDirPath(secondLevelHash)
+	archiveDir := pathAdapter.GenerateArchiveDirPath(secondLevelHash)
 
 	ud := internal.NewUserData(firstLevelHash, secondLevelHash, expired)
 
@@ -41,10 +42,11 @@ func Test_remove_pages(t *testing.T) {
 	err := fileAdapter.CreateDir(string(dirPath), 0777)
 	err = fileAdapter.CreateDir(string(inDir), 0777)
 	err = fileAdapter.CreateDir(string(outDir), 0777)
+	err = fileAdapter.CreateDir(string(archiveDir), 0777)
 	err = os.WriteFile(string(inDir)+file, f, 0777)
 
 	operationFactory := NewOperationFactory()
-	removePagesOperation := operationFactory.CreateNewOperation(conf, ud, files, dirPath, inDir, outDir, "", DestinationRemovePages)
+	removePagesOperation := operationFactory.CreateNewOperation(conf, ud, files, dirPath, inDir, outDir, archiveDir, "", DestinationRemovePages)
 
 	err = removePagesOperation.Execute(adapterLocator)
 

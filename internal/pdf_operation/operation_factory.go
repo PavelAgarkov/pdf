@@ -18,10 +18,11 @@ func (*OperationsFactory) CreateNewOperation(
 	dirPathFile adapter.DirPath,
 	inDir adapter.InDir,
 	outDit adapter.OutDir,
+	archiveDir adapter.ArchiveDir,
 	splitPath adapter.SplitDir,
 	destination Destination,
 ) Operation {
-	bo := NewBaseOperation(configuration, ud, files, dirPathFile, inDir, outDit, destination)
+	bo := NewBaseOperation(configuration, ud, files, dirPathFile, inDir, outDit, archiveDir, destination)
 
 	switch destination {
 	case DestinationMerge:

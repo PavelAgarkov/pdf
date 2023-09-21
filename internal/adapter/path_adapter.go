@@ -17,6 +17,7 @@ type SplitDir string
 type DirPath string
 type OutDir string
 type InDir string
+type ArchiveDir string
 type Path string
 
 type PathAdapter struct{}
@@ -41,6 +42,10 @@ func (pa *PathAdapter) GenerateDirPathToFiles(hash2lvl storage2.Hash2lvl) DirPat
 
 func (pa *PathAdapter) GenerateOutDirPath(hash2lvl storage2.Hash2lvl) OutDir {
 	return OutDir(fmt.Sprintf("./files/%s/out/", string(hash2lvl)))
+}
+
+func (pa *PathAdapter) GenerateArchiveDirPath(hash2lvl storage2.Hash2lvl) ArchiveDir {
+	return ArchiveDir(fmt.Sprintf("./files/%s/archive/", string(hash2lvl)))
 }
 
 func (pa *PathAdapter) GenerateInDirPath(hash2lvl storage2.Hash2lvl) InDir {

@@ -7,7 +7,9 @@ import (
 )
 
 const (
-	Timer = 5 * time.Minute
+	Timer5  = 5 * time.Minute
+	Timer10 = 10 * time.Minute
+	Timer15 = 15 * time.Minute
 )
 
 // OperationStorage т.к. теперь у операций есть пользователь, а не наоборот

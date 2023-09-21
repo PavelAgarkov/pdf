@@ -23,11 +23,12 @@ func Test_cut(t *testing.T) {
 
 	firstLevelHash := storage.GenerateFirstLevelHash()
 	secondLevelHash := storage.GenerateNextLevelHashByPrevious(firstLevelHash, true)
-	expired := time.Now().Add(Timer)
+	expired := time.Now().Add(Timer5)
 
 	inDir := pathAdapter.GenerateInDirPath(secondLevelHash)
 	dirPath := pathAdapter.GenerateDirPathToFiles(secondLevelHash)
 	outDir := pathAdapter.GenerateOutDirPath(secondLevelHash)
+	archiveDir := pathAdapter.GenerateArchiveDirPath(secondLevelHash)
 
 	filesForReplace := []string{"./files/ServiceAgreement_template.pdf", "./files/ServiceAgreement_template.pdf"}
 
@@ -40,6 +41,7 @@ func Test_cut(t *testing.T) {
 	err := fileAdapter.CreateDir(string(dirPath), 0777)
 	err = fileAdapter.CreateDir(string(inDir), 0777)
 	err = fileAdapter.CreateDir(string(outDir), 0777)
+	err = fileAdapter.CreateDir(string(archiveDir), 0777)
 	err = os.WriteFile(string(inDir)+file0, f0, 0777)
 	err = os.WriteFile(string(inDir)+file1, f1, 0777)
 
@@ -47,7 +49,7 @@ func Test_cut(t *testing.T) {
 	ud := internal.NewUserData(firstLevelHash, secondLevelHash, expired)
 
 	operationFactory := NewOperationFactory()
-	mergePagesOperation := operationFactory.CreateNewOperation(conf, ud, files, dirPath, inDir, outDir, "", DestinationMerge)
+	mergePagesOperation := operationFactory.CreateNewOperation(conf, ud, files, dirPath, inDir, outDir, archiveDir, "", DestinationMerge)
 
 	err = mergePagesOperation.Execute(adapterLocator)
 

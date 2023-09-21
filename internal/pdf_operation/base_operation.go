@@ -50,6 +50,7 @@ type BaseOperation struct {
 	dirPathFile   adapter.DirPath // путь до директории файла
 	inDir         adapter.InDir
 	outDir        adapter.OutDir
+	archiveDir    adapter.ArchiveDir
 	destination   Destination
 	status        OperationStatus //статус операции нужен для контоля отмены токена и очистки памяти
 	stoppedReason StoppedReason
@@ -62,6 +63,7 @@ func NewBaseOperation(
 	dirPathFile adapter.DirPath,
 	idDir adapter.InDir,
 	outDIr adapter.OutDir,
+	archiveDir adapter.ArchiveDir,
 	destination Destination,
 ) *BaseOperation {
 	bo := &BaseOperation{

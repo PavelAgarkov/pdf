@@ -110,8 +110,6 @@ func (so *SplitOperation) Execute(locator *adapter.Locator) error {
 
 	fmt.Println(outEntries)
 
-	// собрать по intervals файлы из директории
-
 	// работа по архивации
 
 	// поле этого кода в контроллере нужно будет провести работу с архивом, данных из so хватает

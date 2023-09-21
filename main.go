@@ -48,7 +48,7 @@ func runServer() {
 	defer loggerFactory.FlushLogs(loggerFactory)
 
 	operationStorage := pdf_operation.NewInMemoryOperationStorage()
-	operationStorage.Run(ctx, pdf_operation.Timer)
+	operationStorage.Run(ctx, pdf_operation.Timer5)
 
 	operationFactory := pdf_operation.NewOperationFactory()
 
