@@ -36,7 +36,12 @@ func (so *SplitOperation) GetBaseOperation() *BaseOperation {
 	return so.baseOperation
 }
 
-// возможно придется добавить структуру с параметрами в интерфейс, для операций
+func (so *SplitOperation) GetSplitDir() adapter.SplitDir {
+	return so.splitDir
+}
+
+// делать это в контроллере после выполнения операции и вставлять в хранилище эту структуру
+//operationData := NewOperationData(bo.GetUserData(), bo.archiveDir, bo.status, bo.stoppedReason)
 
 func (so *SplitOperation) Execute(locator *adapter.Locator) error {
 	bo := so.GetBaseOperation()
@@ -62,7 +67,7 @@ func (so *SplitOperation) Execute(locator *adapter.Locator) error {
 	pathAdapter := locator.Locate(adapter.PathAlias).(*adapter.PathAdapter)
 	_, file, err := pathAdapter.StepBack(adapter.Path(firstFile))
 
-	inFile := string(bo.inDir) + file
+	inFile := string(bo.GetInDir()) + file
 
 	many, intervals := bo.GetConfiguration().parseIntervals(splitIntervals)
 	pageCount, err := api.PageCountFile(inFile)
@@ -75,7 +80,7 @@ func (so *SplitOperation) Execute(locator *adapter.Locator) error {
 	}
 
 	pdfAdapter := locator.Locate(adapter.PdfAlias).(*adapter.PdfAdapter)
-	err = pdfAdapter.SplitFile(inFile, string(so.splitDir))
+	err = pdfAdapter.SplitFile(inFile, string(so.GetSplitDir()))
 
 	if err != nil {
 		wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: %w", inFile, err)
@@ -84,7 +89,7 @@ func (so *SplitOperation) Execute(locator *adapter.Locator) error {
 	}
 
 	fileAdapter := locator.Locate(adapter.FileAlias).(*adapter.FileAdapter)
-	splitEntries, err := fileAdapter.GetAllEntriesFromDir(string(so.splitDir), ".pdf")
+	splitEntries, err := fileAdapter.GetAllEntriesFromDir(string(so.GetSplitDir()), ".pdf")
 
 	if err != nil {
 		wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: cant read split dir  %w", inFile, err)
@@ -100,7 +105,7 @@ func (so *SplitOperation) Execute(locator *adapter.Locator) error {
 		return wrapErr
 	}
 
-	outEntries, err := fileAdapter.GetAllEntriesFromDir(string(bo.outDir), ".pdf")
+	outEntries, err := fileAdapter.GetAllEntriesFromDir(string(bo.GetOutDir()), ".pdf")
 
 	if err != nil {
 		wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: cant read out dir  %w", inFile, err)
@@ -130,7 +135,7 @@ func (so *SplitOperation) mergeFiles(
 ) error {
 	bo := so.GetBaseOperation()
 	for k, interval := range intervals {
-		outFile := string(bo.outDir) + string(bo.GetUserData().GetHash1Lvl()) + "_" + splitIntervals[k] + ".pdf"
+		outFile := string(bo.GetOutDir()) + string(bo.GetUserData().GetHash1Lvl()) + "_" + splitIntervals[k] + ".pdf"
 		forMerge := make([]string, 0)
 		fileIndex := 0
 
@@ -142,7 +147,7 @@ func (so *SplitOperation) mergeFiles(
 				return wrapErr
 			}
 
-			_, newPath, err := pathAdapter.StepForward(adapter.Path(so.splitDir), find)
+			_, newPath, err := pathAdapter.StepForward(adapter.Path(so.GetSplitDir()), find)
 			if err != nil {
 				wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: can't build filepath  %w", inFile, err)
 				return wrapErr

@@ -52,9 +52,9 @@ func (rpo *RemovePagesOperation) Execute(locator *adapter.Locator) error {
 	pathAdapter := locator.Locate(adapter.PathAlias).(*adapter.PathAdapter)
 	_, file, err := pathAdapter.StepBack(adapter.Path(firstFile))
 
-	inFile := string(bo.inDir) + file
+	inFile := string(bo.GetInDir()) + file
 
-	outFile := string(bo.outDir) + string(bo.GetUserData().GetHash1Lvl()) + ".pdf"
+	outFile := string(bo.GetOutDir()) + string(bo.GetUserData().GetHash1Lvl()) + ".pdf"
 	pdfAdapter := locator.Locate(adapter.PdfAlias).(*adapter.PdfAdapter)
 	err = pdfAdapter.RemovePagesFile(inFile, outFile, removeIntervals)
 

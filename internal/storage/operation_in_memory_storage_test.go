@@ -42,13 +42,27 @@ func Test_user_in_memory_storage_test(t *testing.T) {
 	operationFactory := pdf_operation.NewOperationFactory()
 	mergePagesOperation := operationFactory.CreateNewOperation(conf, ud, files, dirPath, inDir, outDir, archiveDir, "", pdf_operation.DestinationMerge)
 
-	uStorage.Insert(secondLevelHash, mergePagesOperation)
+	operationData := pdf_operation.NewOperationData(
+		ud,
+		archiveDir,
+		mergePagesOperation.GetBaseOperation().GetStatus(),
+		mergePagesOperation.GetBaseOperation().GetStoppedReason(),
+	)
+
+	uStorage.Insert(secondLevelHash, operationData)
 
 	op, _ := uStorage.Get(secondLevelHash)
-	fmt.Println(op.GetBaseOperation().GetUserData().GetHash2Lvl())
+	fmt.Println(op.GetUserData().GetHash2Lvl())
+
+	//uStorage.Delete(secondLevelHash)
+
+	//op, ok := uStorage.Get(secondLevelHash)
+	//fmt.Println(ok)
+
+	op, ok := uStorage.Put(secondLevelHash, operationData)
+	fmt.Println(op, ok)
 
 	uStorage.Delete(secondLevelHash)
-
-	op, ok := uStorage.Get(secondLevelHash)
-	fmt.Println(ok)
+	op, ok = uStorage.Get(secondLevelHash)
+	fmt.Println(op, ok)
 }

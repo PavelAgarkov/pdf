@@ -40,7 +40,7 @@ func (mo *MergeOperation) Execute(locator *adapter.Locator) error {
 		return err
 	}
 
-	outFile := string(bo.outDir) + string(bo.GetUserData().GetHash1Lvl()) + ".pdf"
+	outFile := string(bo.GetOutDir()) + string(bo.GetUserData().GetHash1Lvl()) + ".pdf"
 
 	pdfAdapter := locator.Locate(adapter.PdfAlias).(*adapter.PdfAdapter)
 	err := pdfAdapter.MergeFiles(inFiles, outFile)

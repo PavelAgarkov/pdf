@@ -20,15 +20,6 @@ import (
 //			canceled
 
 const (
-	StatusStarted          = "started"
-	StatusProcessed        = "processed"
-	StatusCompleted        = "completed"
-	StatusExpired          = "expired"
-	StatusCanceled         = "canceled"
-	StatusAwaitingDownload = "awaiting_download"
-)
-
-const (
 	Timer5  = 5 * time.Minute
 	Timer10 = 10 * time.Minute
 	Timer15 = 15 * time.Minute
@@ -119,10 +110,20 @@ func (bo *BaseOperation) GetStatus() OperationStatus {
 	return bo.status
 }
 
-func (bo *BaseOperation) CanDeleted() bool {
-	return bo.GetStatus() == StatusExpired ||
-		bo.GetStatus() == StatusCanceled ||
-		bo.GetStatus() == StatusCompleted
+func (bo *BaseOperation) GetStoppedReason() StoppedReason {
+	return bo.stoppedReason
+}
+
+func (bo *BaseOperation) GetInDir() adapter.InDir {
+	return bo.inDir
+}
+
+func (bo *BaseOperation) GetOutDir() adapter.OutDir {
+	return bo.outDir
+}
+
+func (bo *BaseOperation) GetArchiveDir() adapter.ArchiveDir {
+	return bo.archiveDir
 }
 
 func (bo *BaseOperation) SetStatus(status OperationStatus) *BaseOperation {

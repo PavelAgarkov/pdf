@@ -42,12 +42,13 @@ func (s *OperationStorage) Run(ctx context.Context, tickerTimer time.Duration) {
 func (s *OperationStorage) setExpired(now time.Time) {
 	s.sm.Range(
 		func(key interface{}, value interface{}) bool {
-			operation := value.(pdf_operation.Operation)
-			uDur := operation.GetBaseOperation().GetUserData().GetExpiredAt().Unix()
+			operation := value.(pdf_operation.OperationDataInterface)
+			//uDur := operation.GetBaseOperation().GetUserData().GetExpiredAt().Unix()
+			uDur := operation.GetUserData().GetExpiredAt().Unix()
 			nDur := now.Unix()
 
 			if nDur > uDur {
-				operation.GetBaseOperation().SetStatus(pdf_operation.StatusExpired)
+				operation.SetStatus(pdf_operation.StatusExpired)
 				s.Put(key.(hash.Hash2lvl), operation)
 				return true
 			}
@@ -59,10 +60,10 @@ func (s *OperationStorage) setExpired(now time.Time) {
 func (s *OperationStorage) clearExpired() {
 	s.sm.Range(
 		func(key interface{}, value interface{}) bool {
-			operation := value.(pdf_operation.Operation)
-			bo := operation.GetBaseOperation()
+			operation := value.(pdf_operation.OperationDataInterface)
+			//bo := operation.GetBaseOperation()
 
-			if bo.CanDeleted() {
+			if operation.CanDeleted() {
 				s.Delete(key.(hash.Hash2lvl))
 				// тут нужно удалять все файлы для этой операции
 				return true
@@ -84,7 +85,7 @@ func (s *OperationStorage) Clear() {
 		})
 }
 
-func (s *OperationStorage) Insert(key hash.Hash2lvl, operation pdf_operation.Operation) {
+func (s *OperationStorage) Insert(key hash.Hash2lvl, operation pdf_operation.OperationDataInterface) {
 	s.sm.Store(key, operation)
 }
 
@@ -92,26 +93,26 @@ func (s *OperationStorage) Delete(key hash.Hash2lvl) {
 	s.sm.Delete(key)
 }
 
-func (s *OperationStorage) Get(key hash.Hash2lvl) (pdf_operation.Operation, bool) {
+func (s *OperationStorage) Get(key hash.Hash2lvl) (pdf_operation.OperationDataInterface, bool) {
 	operation, ok := s.sm.Load(key)
 
-	ud, assert := operation.(pdf_operation.Operation)
+	operat, assert := operation.(pdf_operation.OperationDataInterface)
 	if !assert {
 		return nil, ok
 	}
 
-	return ud.(pdf_operation.Operation), ok
+	return operat.(pdf_operation.OperationDataInterface), ok
 }
 
-func (s *OperationStorage) Put(key hash.Hash2lvl, value pdf_operation.Operation) (pdf_operation.Operation, bool) {
+func (s *OperationStorage) Put(key hash.Hash2lvl, value pdf_operation.OperationDataInterface) (pdf_operation.OperationDataInterface, bool) {
 	previousOperation, ok := s.sm.Swap(key, value)
 
-	previousOperation, assert := previousOperation.(pdf_operation.Operation)
+	previousOperation, assert := previousOperation.(pdf_operation.OperationDataInterface)
 	if !assert {
 		return nil, ok
 	}
 
-	return previousOperation.(pdf_operation.Operation), ok
+	return previousOperation.(pdf_operation.OperationDataInterface), ok
 }
 
 func (s *OperationStorage) Range(fn func(key interface{}, value interface{}) bool) {
