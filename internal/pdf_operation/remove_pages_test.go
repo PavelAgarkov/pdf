@@ -3,9 +3,9 @@ package pdf_operation
 import (
 	"fmt"
 	"os"
-	"pdf/internal"
 	"pdf/internal/adapter"
-	"pdf/internal/storage"
+	"pdf/internal/entity"
+	"pdf/internal/hash"
 	"testing"
 	"time"
 )
@@ -21,8 +21,8 @@ func Test_remove_pages(t *testing.T) {
 
 	conf := NewConfiguration(nil, []string{"2-11", "13-14"}, nil)
 
-	firstLevelHash := storage.GenerateFirstLevelHash()
-	secondLevelHash := storage.GenerateNextLevelHashByPrevious(firstLevelHash, true)
+	firstLevelHash := hash.GenerateFirstLevelHash()
+	secondLevelHash := hash.GenerateNextLevelHashByPrevious(firstLevelHash, true)
 	expired := time.Now().Add(Timer5)
 
 	inDir := pathAdapter.GenerateInDirPath(secondLevelHash)
@@ -30,7 +30,7 @@ func Test_remove_pages(t *testing.T) {
 	outDir := pathAdapter.GenerateOutDirPath(secondLevelHash)
 	archiveDir := pathAdapter.GenerateArchiveDirPath(secondLevelHash)
 
-	ud := internal.NewUserData(firstLevelHash, secondLevelHash, expired)
+	ud := entity.NewUserData(firstLevelHash, secondLevelHash, expired)
 
 	filesForReplace := []string{"./files/ServiceAgreement_template.pdf"}
 	_, file, _ := pathAdapter.StepBack(adapter.Path(filesForReplace[0]))

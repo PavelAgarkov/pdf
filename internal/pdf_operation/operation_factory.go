@@ -1,8 +1,8 @@
 package pdf_operation
 
 import (
-	"pdf/internal"
 	"pdf/internal/adapter"
+	"pdf/internal/entity"
 )
 
 type OperationsFactory struct{}
@@ -13,7 +13,7 @@ func NewOperationFactory() *OperationsFactory {
 
 func (*OperationsFactory) CreateNewOperation(
 	configuration *OperationConfiguration,
-	ud *internal.UserData,
+	ud *entity.UserData,
 	files []string,
 	dirPathFile adapter.DirPath,
 	inDir adapter.InDir,

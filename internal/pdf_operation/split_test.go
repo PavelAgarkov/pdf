@@ -3,9 +3,9 @@ package pdf_operation
 import (
 	"fmt"
 	"os"
-	"pdf/internal"
 	"pdf/internal/adapter"
-	"pdf/internal/storage"
+	"pdf/internal/entity"
+	"pdf/internal/hash"
 	"testing"
 	"time"
 )
@@ -21,8 +21,8 @@ func Test_split(t *testing.T) {
 
 	conf := NewConfiguration([]string{"1-3", "6-12"}, nil, nil)
 
-	firstLevelHash := storage.GenerateFirstLevelHash()
-	secondLevelHash := storage.GenerateNextLevelHashByPrevious(firstLevelHash, true)
+	firstLevelHash := hash.GenerateFirstLevelHash()
+	secondLevelHash := hash.GenerateNextLevelHashByPrevious(firstLevelHash, true)
 	expired := time.Now().Add(Timer5)
 
 	inDir := pathAdapter.GenerateInDirPath(secondLevelHash)
@@ -31,7 +31,7 @@ func Test_split(t *testing.T) {
 	splitDir := pathAdapter.GenerateDirPathToSplitFiles(secondLevelHash)
 	archiveDir := pathAdapter.GenerateArchiveDirPath(secondLevelHash)
 
-	ud := internal.NewUserData(firstLevelHash, secondLevelHash, expired)
+	ud := entity.NewUserData(firstLevelHash, secondLevelHash, expired)
 
 	filesForReplace := []string{"./files/ServiceAgreement_template.pdf"}
 	_, file0, _ := pathAdapter.StepBack(adapter.Path(filesForReplace[0]))

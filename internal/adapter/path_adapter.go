@@ -3,7 +3,7 @@ package adapter
 import (
 	"errors"
 	"fmt"
-	storage2 "pdf/internal/storage"
+	"pdf/internal/hash"
 	"slices"
 	"strings"
 )
@@ -32,23 +32,23 @@ func (pa *PathAdapter) GetAlias() string {
 
 // хранить разрезанные файлы в ./files/Hash2lvl/split/ - так же и генерировать урл на скачивание через Hash2lvl
 
-func (pa *PathAdapter) GenerateDirPathToSplitFiles(hash2lvl storage2.Hash2lvl) SplitDir {
+func (pa *PathAdapter) GenerateDirPathToSplitFiles(hash2lvl hash.Hash2lvl) SplitDir {
 	return SplitDir(fmt.Sprintf("./files/%s/split/", string(hash2lvl)))
 }
 
-func (pa *PathAdapter) GenerateDirPathToFiles(hash2lvl storage2.Hash2lvl) DirPath {
+func (pa *PathAdapter) GenerateDirPathToFiles(hash2lvl hash.Hash2lvl) DirPath {
 	return DirPath(fmt.Sprintf("./files/%s/", string(hash2lvl)))
 }
 
-func (pa *PathAdapter) GenerateOutDirPath(hash2lvl storage2.Hash2lvl) OutDir {
+func (pa *PathAdapter) GenerateOutDirPath(hash2lvl hash.Hash2lvl) OutDir {
 	return OutDir(fmt.Sprintf("./files/%s/out/", string(hash2lvl)))
 }
 
-func (pa *PathAdapter) GenerateArchiveDirPath(hash2lvl storage2.Hash2lvl) ArchiveDir {
+func (pa *PathAdapter) GenerateArchiveDirPath(hash2lvl hash.Hash2lvl) ArchiveDir {
 	return ArchiveDir(fmt.Sprintf("./files/%s/archive/", string(hash2lvl)))
 }
 
-func (pa *PathAdapter) GenerateInDirPath(hash2lvl storage2.Hash2lvl) InDir {
+func (pa *PathAdapter) GenerateInDirPath(hash2lvl hash.Hash2lvl) InDir {
 	return InDir(fmt.Sprintf("./files/%s/in/", string(hash2lvl)))
 }
 

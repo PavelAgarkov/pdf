@@ -3,9 +3,9 @@ package pdf_operation
 import (
 	"fmt"
 	"os"
-	"pdf/internal"
 	"pdf/internal/adapter"
-	"pdf/internal/storage"
+	"pdf/internal/entity"
+	"pdf/internal/hash"
 	"testing"
 	"time"
 )
@@ -21,8 +21,8 @@ func Test_cut(t *testing.T) {
 
 	conf := NewConfiguration(nil, nil, nil)
 
-	firstLevelHash := storage.GenerateFirstLevelHash()
-	secondLevelHash := storage.GenerateNextLevelHashByPrevious(firstLevelHash, true)
+	firstLevelHash := hash.GenerateFirstLevelHash()
+	secondLevelHash := hash.GenerateNextLevelHashByPrevious(firstLevelHash, true)
 	expired := time.Now().Add(Timer5)
 
 	inDir := pathAdapter.GenerateInDirPath(secondLevelHash)
@@ -46,7 +46,7 @@ func Test_cut(t *testing.T) {
 	err = os.WriteFile(string(inDir)+file1, f1, 0777)
 
 	files := []string{string(inDir) + file0, string(inDir) + file1}
-	ud := internal.NewUserData(firstLevelHash, secondLevelHash, expired)
+	ud := entity.NewUserData(firstLevelHash, secondLevelHash, expired)
 
 	operationFactory := NewOperationFactory()
 	mergePagesOperation := operationFactory.CreateNewOperation(conf, ud, files, dirPath, inDir, outDir, archiveDir, "", DestinationMerge)

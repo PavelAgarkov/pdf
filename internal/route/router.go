@@ -7,6 +7,7 @@ import (
 	"pdf/internal/controller"
 	"pdf/internal/logger"
 	"pdf/internal/pdf_operation"
+	"pdf/internal/storage"
 )
 
 const FilesPath = "./files/"
@@ -16,7 +17,7 @@ const FrontendAssets = "./pdf-frontend/dist/assets/"
 func Router(
 	ctx context.Context,
 	app *fiber.App,
-	operationStorage *pdf_operation.OperationStorage,
+	operationStorage *storage.OperationStorage,
 	operationFactory *pdf_operation.OperationsFactory,
 	adapterLocator *adapter.Locator,
 	loggerFactory logger.Logger,

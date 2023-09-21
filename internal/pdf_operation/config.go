@@ -7,21 +7,18 @@ import (
 )
 
 type OperationConfiguration struct {
-	splitIntervals []string
-	//cutIntervals         []string
+	splitIntervals       []string
 	removePagesIntervals []string
 	mergeOrder           []string
 }
 
 func NewConfiguration(
 	splitIntervals,
-	//cutIntervals,
 	removePagesIntervals,
 	mergeOrder []string,
 ) *OperationConfiguration {
 	return &OperationConfiguration{
-		splitIntervals: splitIntervals,
-		//cutIntervals:         cutIntervals,
+		splitIntervals:       splitIntervals,
 		removePagesIntervals: removePagesIntervals,
 		mergeOrder:           mergeOrder,
 	}
@@ -30,10 +27,6 @@ func NewConfiguration(
 func (oc *OperationConfiguration) GetSplitIntervals() []string {
 	return oc.splitIntervals
 }
-
-//func (oc *OperationConfiguration) GetCutIntervals() []string {
-//	return oc.cutIntervals
-//}
 
 func (oc *OperationConfiguration) GetRemovePagesIntervals() []string {
 	return oc.removePagesIntervals

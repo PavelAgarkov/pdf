@@ -1,11 +1,12 @@
 package pdf_operation
 
 import (
-	"pdf/internal"
 	"pdf/internal/adapter"
+	"pdf/internal/entity"
 	"slices"
 	"strconv"
 	"sync"
+	"time"
 )
 
 //		 		expired
@@ -27,6 +28,12 @@ const (
 	StatusAwaitingDownload = "awaiting_download"
 )
 
+const (
+	Timer5  = 5 * time.Minute
+	Timer10 = 10 * time.Minute
+	Timer15 = 15 * time.Minute
+)
+
 type Operation interface {
 	GetBaseOperation() *BaseOperation
 	Execute(locator *adapter.Locator) error
@@ -45,7 +52,7 @@ type StoppedReason string
 
 type BaseOperation struct {
 	configuration *OperationConfiguration // конфигурации для выполнения операций, например диапазоны разбиения файла
-	ud            *internal.UserData
+	ud            *entity.UserData
 	files         sync.Map
 	dirPathFile   adapter.DirPath // путь до директории файла
 	inDir         adapter.InDir
@@ -58,7 +65,7 @@ type BaseOperation struct {
 
 func NewBaseOperation(
 	configuration *OperationConfiguration,
-	ud *internal.UserData,
+	ud *entity.UserData,
 	files []string,
 	dirPathFile adapter.DirPath,
 	idDir adapter.InDir,
@@ -70,8 +77,9 @@ func NewBaseOperation(
 		configuration: configuration,
 		ud:            ud,
 		dirPathFile:   dirPathFile,
-		outDir:        outDIr,
 		inDir:         idDir,
+		outDir:        outDIr,
+		archiveDir:    archiveDir,
 		destination:   destination,
 		status:        OperationStatus(StatusStarted),
 	}
@@ -103,7 +111,7 @@ func (bo *BaseOperation) GetConfiguration() *OperationConfiguration {
 	return bo.configuration
 }
 
-func (bo *BaseOperation) GetUserData() *internal.UserData {
+func (bo *BaseOperation) GetUserData() *entity.UserData {
 	return bo.ud
 }
 

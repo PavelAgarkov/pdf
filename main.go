@@ -12,6 +12,7 @@ import (
 	"pdf/internal/logger"
 	"pdf/internal/pdf_operation"
 	"pdf/internal/route"
+	"pdf/internal/storage"
 	"sync"
 	"syscall"
 )
@@ -47,7 +48,7 @@ func runServer() {
 	defer cleanupTasks(loggerFactory)
 	defer loggerFactory.FlushLogs(loggerFactory)
 
-	operationStorage := pdf_operation.NewInMemoryOperationStorage()
+	operationStorage := storage.NewInMemoryOperationStorage()
 	operationStorage.Run(ctx, pdf_operation.Timer5)
 
 	operationFactory := pdf_operation.NewOperationFactory()
