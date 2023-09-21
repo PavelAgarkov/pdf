@@ -1,9 +1,9 @@
 package route
 
 import (
-	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/favicon"
+	"pdf/internal/controller"
 	"pdf/internal/logger"
 	"pdf/internal/pdf_operation"
 )
@@ -21,20 +21,9 @@ func faviconMiddleware(app *fiber.App) {
 	}))
 }
 
-func recoveryHandleRequestMiddleware(app *fiber.App, factory logger.Logger) {
+func recoveryHandleRequestMiddleware(app *fiber.App, loggerFactory logger.Logger) {
 	app.Use(func(c *fiber.Ctx) error {
-		c.Context()
-		defer func() {
-			if r := recover(); r != nil {
-				errStr := fmt.Sprintf("Recovered. Error: %s\n", r)
-				fmt.Println(errStr)
-				factory.GetLogger(logger.ErrorName).Error(errStr)
-				err := c.RedirectToRoute("root", map[string]interface{}{})
-				if err != nil {
-					return
-				}
-			}
-		}()
+		defer controller.RestoreController(loggerFactory, c)
 		return c.Next()
 	})
 }

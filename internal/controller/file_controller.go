@@ -10,7 +10,9 @@ import (
 	"time"
 )
 
-type FileController struct{}
+type FileController struct {
+	bc *BaseController
+}
 
 type Response struct {
 	str string
@@ -20,27 +22,30 @@ func (r *Response) GetStr() string {
 	return r.str
 }
 
-func GetFC() *FileController {
-	return &FileController{}
+func NewFileController(bc *BaseController) *FileController {
+	return &FileController{
+		bc: bc,
+	}
 }
 
-func (f *FileController) FileController(
+func (f *FileController) Handle(
 	ctx context.Context,
 	filesPath string,
-	factory logger.Logger,
+	loggerFactory logger.Logger,
 ) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
+		defer RestoreController(loggerFactory, c)
 		ctxC, cancel := context.WithTimeout(ctx, 10*time.Second)
 		defer cancel()
 
 		cr := make(chan ResponseInterface)
 		start := make(chan struct{})
 
-		factory.GetLogger(logger.ErrorName).Error("Error")
+		loggerFactory.GetLogger(logger.PanicName).Panic("panic")
 		filename := filesPath + c.Params("filename")
 		go realHandler(start, cr, filename)
 
-		res := getBaseController().SelectResult(ctxC, cr, start)
+		res := f.bc.SelectResult(ctxC, cr, start)
 
 		// context cancelled
 		if res == nil {

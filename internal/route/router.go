@@ -21,6 +21,7 @@ func Router(
 	adapterLocator *adapter.Locator,
 	loggerFactory logger.Logger,
 ) {
-	app.Get("/download/:filename", controller.GetFC().FileController(ctx, FilesPath, loggerFactory)).
+	bc := controller.NewBaseController()
+	app.Get("/download/:filename", controller.NewFileController(bc).Handle(ctx, FilesPath, loggerFactory)).
 		Name("file-download")
 }
