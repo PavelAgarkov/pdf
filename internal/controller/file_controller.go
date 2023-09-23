@@ -41,7 +41,6 @@ func (f *FileController) Handle(
 		cr := make(chan ResponseInterface)
 		start := make(chan struct{})
 
-		loggerFactory.GetLogger(logger.PanicName).Panic("panic")
 		filename := filesPath + c.Params("filename")
 		go realHandler(start, cr, filename)
 

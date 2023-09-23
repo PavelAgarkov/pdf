@@ -1,7 +1,6 @@
 package pdf_operation
 
 import (
-	"slices"
 	"strconv"
 	"strings"
 )
@@ -39,7 +38,7 @@ func (oc *OperationConfiguration) GetMergeOrder() []string {
 func (oc *OperationConfiguration) parseIntervals(intervals []string) ([]int, [][]int) {
 	filling := make([]int, 0)
 	intervalInt := make([][]int, len(intervals), len(intervals))
-	index := 0
+
 	for k, v := range intervals {
 		interval := strings.Split(v, "-")
 		rangeInt := make([]int, 2, 2)
@@ -50,8 +49,7 @@ func (oc *OperationConfiguration) parseIntervals(intervals []string) ([]int, [][
 			rangeInt[1] = int(right)
 			intervalInt[k] = rangeInt
 			for i := left; i <= right; i++ {
-				filling = slices.Insert(filling, index, int(i))
-				index++
+				filling = append(filling, int(i))
 			}
 		}
 	}

@@ -170,7 +170,7 @@ func (so *SplitOperation) mergeFiles(
 				return wrapErr
 			}
 
-			forMerge = slices.Insert(forMerge, fileIndex, string(newPath))
+			forMerge = append(forMerge, string(newPath))
 			fileIndex++
 		}
 

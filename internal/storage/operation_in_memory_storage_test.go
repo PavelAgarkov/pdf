@@ -12,11 +12,12 @@ import (
 )
 
 func Test_user_in_memory_storage_test(t *testing.T) {
+	p := adapter.NewPathAdapter()
 	adapterLocator := adapter.NewAdapterLocator(
 		adapter.NewFileAdapter(),
 		adapter.NewPathAdapter(),
 		adapter.NewPdfAdapter(),
-		adapter.NewRarAdapterAdapter(),
+		adapter.NewArchiveAdapter(p),
 	)
 	pathAdapter := adapterLocator.Locate(adapter.PathAlias).(*adapter.PathAdapter)
 
