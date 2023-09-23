@@ -82,16 +82,6 @@ func (aa *ArchiveAdapter) Archive(
 	hash2lvl hash.Hash2lvl,
 	archiveDir ArchiveDir,
 ) (string, error) {
-
-	//files, err := archiver.FilesFromDisk(nil, map[string]string{
-	//"/path/on/disk/file1.txt": "file1.txt",
-	//"./files/ServiceAgreement_template.pdf":  "ServiceAgreement_template.pdf",
-	//"./files/ServiceAgreement_template1.pdf": "ServiceAgreement_template1.pdf",
-	//"/path/on/disk/file3.txt": "",              // put in root of archive as file3.txt
-	//"/path/on/disk/file4.txt": "subfolder/",    // put in subfolder as file4.txt
-	//"/path/on/disk/folder":    "Custom Folder", // contents added recursively
-	//})
-
 	files, err := archiver.FilesFromDisk(nil, outDirFilesMap)
 	if err != nil {
 		return "", fmt.Errorf("can't prepare files for archive: %w", err)
