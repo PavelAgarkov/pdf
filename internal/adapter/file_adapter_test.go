@@ -3,13 +3,12 @@ package adapter
 import (
 	"fmt"
 	"pdf/internal/hash"
-	"strconv"
 	"testing"
 )
 
 func Test_GetAllEntriesInDir(t *testing.T) {
 	pa := NewPathAdapter()
-	secondLevelHash := "b4116a5731610794d2e50216b7be02c16c1407c14bf60808ea8c1276f1f11491"
+	secondLevelHash := "189f100c16a45d22e9b5145621521ad879ad16120e716a6148b39abdc7b71c35"
 	splitDir := pa.GenerateDirPathToSplitFiles(hash.Hash2lvl(secondLevelHash))
 	fa := NewFileAdapter()
 
@@ -19,5 +18,6 @@ func Test_GetAllEntriesInDir(t *testing.T) {
 		fmt.Println(err)
 	}
 
-	fmt.Println(e[strconv.Itoa(13)])
+	//fmt.Println(e[strconv.Itoa(13)])
+	fmt.Println(e)
 }

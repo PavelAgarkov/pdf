@@ -1,6 +1,7 @@
 package pdf_operation
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"pdf/internal/adapter"
@@ -11,11 +12,12 @@ import (
 )
 
 func Test_split(t *testing.T) {
+	p := adapter.NewPathAdapter()
 	adapterLocator := adapter.NewAdapterLocator(
 		adapter.NewFileAdapter(),
-		adapter.NewPathAdapter(),
+		p,
 		adapter.NewPdfAdapter(),
-		adapter.NewRarAdapterAdapter(),
+		adapter.NewArchiveAdapter(p),
 	)
 	pathAdapter := adapterLocator.Locate(adapter.PathAlias).(*adapter.PathAdapter)
 
@@ -50,7 +52,8 @@ func Test_split(t *testing.T) {
 	operationFactory := NewOperationFactory()
 	mergePagesOperation := operationFactory.CreateNewOperation(conf, ud, files, dirPath, inDir, outDir, archiveDir, splitDir, DestinationSplit)
 
-	err = mergePagesOperation.Execute(adapterLocator)
+	ctx := context.Background()
+	_, err = mergePagesOperation.Execute(ctx, adapterLocator, adapter.ZipZstFormat)
 
 	if err != nil {
 		fmt.Println(err.Error())

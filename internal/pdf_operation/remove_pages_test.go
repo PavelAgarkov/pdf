@@ -1,6 +1,7 @@
 package pdf_operation
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"pdf/internal/adapter"
@@ -11,11 +12,12 @@ import (
 )
 
 func Test_remove_pages(t *testing.T) {
+	p := adapter.NewPathAdapter()
 	adapterLocator := adapter.NewAdapterLocator(
 		adapter.NewFileAdapter(),
-		adapter.NewPathAdapter(),
+		p,
 		adapter.NewPdfAdapter(),
-		adapter.NewRarAdapterAdapter(),
+		adapter.NewArchiveAdapter(p),
 	)
 	pathAdapter := adapterLocator.Locate(adapter.PathAlias).(*adapter.PathAdapter)
 
@@ -48,7 +50,8 @@ func Test_remove_pages(t *testing.T) {
 	operationFactory := NewOperationFactory()
 	removePagesOperation := operationFactory.CreateNewOperation(conf, ud, files, dirPath, inDir, outDir, archiveDir, "", DestinationRemovePages)
 
-	err = removePagesOperation.Execute(adapterLocator)
+	ctx := context.Background()
+	_, err = removePagesOperation.Execute(ctx, adapterLocator, adapter.TarFormat)
 
 	if err != nil {
 		fmt.Println(err.Error())

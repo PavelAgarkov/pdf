@@ -1,9 +1,11 @@
 package pdf_operation
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/pdfcpu/pdfcpu/pkg/api"
+	"os"
 	"pdf/internal/adapter"
 	"slices"
 	"strconv"
@@ -43,7 +45,13 @@ func (so *SplitOperation) GetSplitDir() adapter.SplitDir {
 // делать это в контроллере после выполнения операции и вставлять в хранилище эту структуру
 //operationData := NewOperationData(bo.GetUserData(), bo.archiveDir, bo.status, bo.stoppedReason)
 
-func (so *SplitOperation) Execute(locator *adapter.Locator) error {
+func (so *SplitOperation) Execute(ctx context.Context, locator *adapter.Locator, format string) (string, error) {
+	defer func() {
+		_ = os.RemoveAll(string(so.GetBaseOperation().GetInDir()))
+		_ = os.RemoveAll(string(so.GetBaseOperation().GetOutDir()))
+		_ = os.RemoveAll(string(so.GetSplitDir()))
+	}()
+
 	bo := so.GetBaseOperation()
 	bo.SetStatus(StatusProcessed)
 
@@ -51,7 +59,7 @@ func (so *SplitOperation) Execute(locator *adapter.Locator) error {
 	if splitIntervals == nil {
 		err := errors.New("can't execute operation SPLIT, no intervals: %w")
 		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(err.Error()))
-		return err
+		return "", err
 	}
 
 	allPaths := bo.GetAllPaths()
@@ -59,7 +67,7 @@ func (so *SplitOperation) Execute(locator *adapter.Locator) error {
 	if len(allPaths) > 1 {
 		err := errors.New("operation SPLIT can't have more 1 file")
 		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(err.Error()))
-		return err
+		return "", err
 	}
 
 	firstFile := allPaths[0]
@@ -76,7 +84,7 @@ func (so *SplitOperation) Execute(locator *adapter.Locator) error {
 	if err != nil || pageCount < maxValue {
 		wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: page coun less interval %w", inFile, err)
 		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(wrapErr.Error()))
-		return wrapErr
+		return "", wrapErr
 	}
 
 	pdfAdapter := locator.Locate(adapter.PdfAlias).(*adapter.PdfAdapter)
@@ -85,7 +93,7 @@ func (so *SplitOperation) Execute(locator *adapter.Locator) error {
 	if err != nil {
 		wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: %w", inFile, err)
 		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(wrapErr.Error()))
-		return wrapErr
+		return "", wrapErr
 	}
 
 	fileAdapter := locator.Locate(adapter.FileAlias).(*adapter.FileAdapter)
@@ -94,7 +102,7 @@ func (so *SplitOperation) Execute(locator *adapter.Locator) error {
 	if err != nil {
 		wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: cant read split dir  %w", inFile, err)
 		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(wrapErr.Error()))
-		return wrapErr
+		return "", wrapErr
 	}
 
 	err = so.mergeFiles(pathAdapter, pdfAdapter, splitEntries, intervals, splitIntervals, inFile)
@@ -102,7 +110,7 @@ func (so *SplitOperation) Execute(locator *adapter.Locator) error {
 	if err != nil {
 		wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: cant read out dir  %w", inFile, err)
 		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(wrapErr.Error()))
-		return wrapErr
+		return "", wrapErr
 	}
 
 	outEntries, err := fileAdapter.GetAllEntriesFromDir(string(bo.GetOutDir()), ".pdf")
@@ -110,19 +118,28 @@ func (so *SplitOperation) Execute(locator *adapter.Locator) error {
 	if err != nil {
 		wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: cant read out dir  %w", inFile, err)
 		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(wrapErr.Error()))
-		return wrapErr
+		return "", wrapErr
 	}
 
-	fmt.Println(outEntries)
+	associationPath := pathAdapter.BuildOutPathFilesMap(outEntries, so.GetBaseOperation().GetUserData().GetHash2Lvl())
+	archiveAdapter := locator.Locate(adapter.ArchiveAlias).(*adapter.ArchiveAdapter)
+	compressor, _ := archiveAdapter.CreateCompressor(format)
+	archivePath, err := archiveAdapter.Archive(
+		ctx,
+		compressor,
+		associationPath,
+		so.GetBaseOperation().GetUserData().GetHash2Lvl(),
+		so.GetBaseOperation().GetArchiveDir(),
+	)
 
-	// работа по архивации
-
-	// поле этого кода в контроллере нужно будет провести работу с архивом, данных из so хватает
-	// после окончания операции, нужно внести данные в хранилище операций. Объекты будут вноситься
-	// в хранилище при создании операции, затем обновляться во время выполнения (processed, canceled,
+	if err != nil {
+		wrapErr := fmt.Errorf("can't execute operation SPLIT : can't achivation %s:  %w", archivePath, err)
+		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(wrapErr.Error()))
+		return "", wrapErr
+	}
 
 	bo.SetStatus(StatusAwaitingDownload)
-	return nil
+	return archivePath, nil
 }
 
 func (so *SplitOperation) mergeFiles(
