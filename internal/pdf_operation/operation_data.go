@@ -11,6 +11,16 @@ type OperationDataInterface interface {
 	SetStatus(status OperationStatus) *OperationData
 }
 
+//		 		expired
+//		   		/\
+//	       		|
+//
+// started->processed->awaiting_download->completed
+//
+//	   			|
+//	  			\/
+//			canceled
+
 const (
 	StatusStarted          = "started"
 	StatusProcessed        = "processed"
@@ -22,7 +32,7 @@ const (
 
 type OperationData struct {
 	ud            *entity.UserData
-	archiveDir    adapter.ArchiveDir
+	archivePath   adapter.ArchiveDir
 	status        OperationStatus //статус операции нужен для контоля отмены токена и очистки памяти
 	stoppedReason StoppedReason
 }
@@ -35,7 +45,7 @@ func NewOperationData(
 ) *OperationData {
 	return &OperationData{
 		ud:            ud,
-		archiveDir:    archiveDir,
+		archivePath:   archiveDir,
 		status:        status,
 		stoppedReason: stoppedReason,
 	}
@@ -45,8 +55,8 @@ func (od *OperationData) GetUserData() *entity.UserData {
 	return od.ud
 }
 
-func (od *OperationData) GetArchiveDir() adapter.ArchiveDir {
-	return od.archiveDir
+func (od *OperationData) GetArchivePath() adapter.ArchiveDir {
+	return od.archivePath
 }
 
 func (od *OperationData) GetStatus() OperationStatus {

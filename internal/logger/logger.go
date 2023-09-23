@@ -73,26 +73,12 @@ func (l *Factory) GetLogger(name string) *zap.SugaredLogger {
 
 func (l *Factory) FlushLogs(logger Logger) {
 	fmt.Println("\nFlush logger ... ")
-	err := logger.GetLogger(PanicName).Sync()
-	if err != nil {
-		//fmt.Println("failed buffered panic-logger flash " + err.Error())
-	}
-	err = logger.GetLogger(ErrorName).Sync()
-	if err != nil {
-		//fmt.Println("failed buffered err-logger flash " + err.Error())
-	}
-	err = logger.GetLogger(WarningName).Sync()
-	if err != nil {
-		//fmt.Println("failed buffered warning-logger flash " + err.Error())
-	}
-	err = logger.GetLogger(InfoName).Sync()
-	if err != nil {
-		//fmt.Println("failed buffered info-logger flash " + err.Error())
-	}
-	err = logger.GetLogger(FrontendName).Sync()
-	if err != nil {
-		//fmt.Println("failed buffered frontend-logger flash " + err.Error())
-	}
+	_ = logger.GetLogger(PanicName).Sync()
+	_ = logger.GetLogger(ErrorName).Sync()
+	_ = logger.GetLogger(WarningName).Sync()
+	_ = logger.GetLogger(InfoName).Sync()
+	_ = logger.GetLogger(FrontendName).Sync()
+
 }
 
 func (l *Factory) initLogger(name map[string]string) Logger {

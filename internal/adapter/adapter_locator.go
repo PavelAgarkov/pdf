@@ -5,41 +5,31 @@ type Adapter interface {
 }
 
 type Locator struct {
-	fileAdapter *FileAdapter
-	faAlias     string
-	pathAdapter *PathAdapter
-	paAlias     string
-	pdfAdapter  *PdfAdapter
-	pdfaAlias   string
-	rarAdapter  *RarAdapter
-	rarAlias    string
+	locateMap map[string]Adapter
 }
 
-func NewAdapterLocator(fileAdapter *FileAdapter, pathAdapter *PathAdapter, pdfAdapter *PdfAdapter, rarAdapter *RarAdapter) *Locator {
-	return &Locator{
-		fileAdapter: fileAdapter,
-		faAlias:     fileAdapter.GetAlias(),
-		pathAdapter: pathAdapter,
-		paAlias:     pathAdapter.GetAlias(),
-		pdfAdapter:  pdfAdapter,
-		pdfaAlias:   pdfAdapter.GetAlias(),
-		rarAdapter:  rarAdapter,
-		rarAlias:    rarAdapter.GetAlias(),
+func NewAdapterLocator(adapters ...Adapter) *Locator {
+	l := &Locator{
+		locateMap: make(map[string]Adapter),
 	}
+
+	for _, adapter := range adapters {
+		l.locateMap[adapter.GetAlias()] = adapter
+	}
+	return l
+}
+
+func (l *Locator) setAdapter(alias string, adapter Adapter) *Locator {
+	l.locateMap[alias] = adapter
+	return l
 }
 
 func (l *Locator) Locate(alias string) Adapter {
-	switch alias {
-	case FileAlias:
-		return l.fileAdapter
-	case PathAlias:
-		return l.pathAdapter
-	case PdfAlias:
-		return l.pdfAdapter
-	case RarAlias:
-		return l.rarAdapter
+	adapter, ok := l.locateMap[alias]
 
-	default:
+	if !ok {
 		return nil
 	}
+
+	return adapter
 }

@@ -22,6 +22,10 @@ type Path string
 
 type PathAdapter struct{}
 
+func GenerateFrontendDist() string {
+	return frontendDist
+}
+
 func NewPathAdapter() *PathAdapter {
 	return &PathAdapter{}
 }
@@ -42,6 +46,10 @@ func (pa *PathAdapter) GenerateDirPathToFiles(hash2lvl hash.Hash2lvl) DirPath {
 
 func (pa *PathAdapter) GenerateOutDirPath(hash2lvl hash.Hash2lvl) OutDir {
 	return OutDir(fmt.Sprintf("./files/%s/out/", string(hash2lvl)))
+}
+
+func (pa *PathAdapter) GenerateOutDirFile(hash2lvl hash.Hash2lvl, file string) string {
+	return fmt.Sprintf("./files/%s/out/%s", string(hash2lvl), file)
 }
 
 func (pa *PathAdapter) GenerateArchiveDirPath(hash2lvl hash.Hash2lvl) ArchiveDir {
@@ -79,6 +87,12 @@ func (pa *PathAdapter) StepForward(path Path, next string) (Path, Path, error) {
 	return path, Path(newPath), nil
 }
 
-func (pa *PathAdapter) GenerateFrontendDist() string {
-	return frontendDist
+func (pa *PathAdapter) BuildOutPathFilesMap(aliasMap map[string]string, hash2lvl hash.Hash2lvl) map[string]string {
+	resultMap := make(map[string]string)
+
+	for _, alias := range aliasMap {
+		resultMap[pa.GenerateOutDirFile(hash2lvl, alias)] = alias
+	}
+
+	return resultMap
 }

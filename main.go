@@ -26,13 +26,14 @@ func main() {
 }
 
 func runServer() {
+	pathAdapter := adapter.NewPathAdapter()
 	adapterLocator := adapter.NewAdapterLocator(
 		adapter.NewFileAdapter(),
-		adapter.NewPathAdapter(),
+		pathAdapter,
 		adapter.NewPdfAdapter(),
-		adapter.NewRarAdapterAdapter(),
+		adapter.NewArchiveAdapter(pathAdapter),
 	)
-	engine := html.New(adapterLocator.Locate(adapter.PathAlias).(*adapter.PathAdapter).GenerateFrontendDist(), ".html")
+	engine := html.New(adapter.GenerateFrontendDist(), ".html")
 	app := fiber.New(fiber.Config{
 		Views: engine,
 	})

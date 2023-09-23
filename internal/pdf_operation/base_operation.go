@@ -1,23 +1,13 @@
 package pdf_operation
 
 import (
+	"context"
 	"pdf/internal/adapter"
 	"pdf/internal/entity"
-	"slices"
 	"strconv"
 	"sync"
 	"time"
 )
-
-//		 		expired
-//		   		/\
-//	       		|
-//
-// started->processed->awaiting_download->completed
-//
-//	   			|
-//	  			\/
-//			canceled
 
 const (
 	Timer5  = 5 * time.Minute
@@ -27,7 +17,7 @@ const (
 
 type Operation interface {
 	GetBaseOperation() *BaseOperation
-	Execute(locator *adapter.Locator) error
+	Execute(ctx context.Context, locator *adapter.Locator, format string) (string, error)
 	GetDestination() string
 }
 
@@ -87,11 +77,7 @@ func (bo *BaseOperation) GetAllPaths() []string {
 	paths := make([]string, 0)
 
 	bo.files.Range(func(key, value any) bool {
-		convertKeyInt, err := strconv.Atoi(key.(string))
-		if err != nil {
-			return false
-		}
-		paths = slices.Insert(paths, convertKeyInt, value.(string))
+		paths = append(paths, value.(string))
 		return true
 	})
 

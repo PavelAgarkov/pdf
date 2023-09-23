@@ -1,8 +1,10 @@
 package pdf_operation
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"os"
 	"pdf/internal/adapter"
 )
 
@@ -28,7 +30,12 @@ func (rpo *RemovePagesOperation) GetBaseOperation() *BaseOperation {
 	return rpo.baseOperation
 }
 
-func (rpo *RemovePagesOperation) Execute(locator *adapter.Locator) error {
+func (rpo *RemovePagesOperation) Execute(ctx context.Context, locator *adapter.Locator, format string) (string, error) {
+	defer func() {
+		_ = os.RemoveAll(string(rpo.GetBaseOperation().GetInDir()))
+		_ = os.RemoveAll(string(rpo.GetBaseOperation().GetOutDir()))
+	}()
+
 	bo := rpo.GetBaseOperation()
 	bo.SetStatus(StatusProcessed)
 
@@ -36,7 +43,7 @@ func (rpo *RemovePagesOperation) Execute(locator *adapter.Locator) error {
 	if removeIntervals == nil {
 		err := errors.New("can't execute operation REMOVE_PAGES, no intervals: %w")
 		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(err.Error()))
-		return err
+		return "", err
 	}
 
 	allPaths := bo.GetAllPaths()
@@ -44,7 +51,7 @@ func (rpo *RemovePagesOperation) Execute(locator *adapter.Locator) error {
 	if len(allPaths) > 1 {
 		err := errors.New("operation REMOVE_PAGES can't have more 1 file")
 		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(err.Error()))
-		return err
+		return "", err
 	}
 
 	firstFile := allPaths[0]
@@ -61,18 +68,36 @@ func (rpo *RemovePagesOperation) Execute(locator *adapter.Locator) error {
 	if err != nil {
 		wrapErr := fmt.Errorf("can't execute operation REMOVE_PAGES to file %s: %w", inFile, err)
 		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(wrapErr.Error()))
-		return wrapErr
+		return "", wrapErr
 	}
 
 	err = pdfAdapter.Optimize(outFile, outFile)
 	if err != nil {
 		wrapErr := fmt.Errorf("can't optimize operation REMOVE_PAGES to file %s: %w", inFile, err)
 		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(wrapErr.Error()))
-		return wrapErr
+		return "", wrapErr
 	}
 
-	// работа по архивации
+	fileAdapter := locator.Locate(adapter.FileAlias).(*adapter.FileAdapter)
+	outEntries, err := fileAdapter.GetAllEntriesFromDir(string(bo.GetOutDir()), ".pdf")
+
+	associationPath := pathAdapter.BuildOutPathFilesMap(outEntries, rpo.GetBaseOperation().GetUserData().GetHash2Lvl())
+	archiveAdapter := locator.Locate(adapter.ArchiveAlias).(*adapter.ArchiveAdapter)
+	compressor, _ := archiveAdapter.CreateCompressor(format)
+	archivePath, err := archiveAdapter.Archive(
+		ctx,
+		compressor,
+		associationPath,
+		rpo.GetBaseOperation().GetUserData().GetHash2Lvl(),
+		rpo.GetBaseOperation().GetArchiveDir(),
+	)
+
+	if err != nil {
+		wrapErr := fmt.Errorf("can't execute operation MERGE : can't achivation %s:  %w", archivePath, err)
+		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(wrapErr.Error()))
+		return "", wrapErr
+	}
 
 	bo.SetStatus(StatusAwaitingDownload)
-	return nil
+	return archivePath, nil
 }
