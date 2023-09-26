@@ -2,6 +2,7 @@ package route
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/favicon"
 	"pdf/internal/controller"
 	"pdf/internal/logger"
@@ -10,6 +11,7 @@ import (
 
 func Middleware(app *fiber.App, operationStorage *storage.OperationStorage, factory logger.Logger) {
 	faviconMiddleware(app)
+	corsMiddleware(app)
 	recoveryHandleRequestMiddleware(app, factory)
 	routs404RedirectMiddleware(app)
 }
@@ -18,6 +20,13 @@ func faviconMiddleware(app *fiber.App) {
 	app.Use(favicon.New(favicon.Config{
 		File: FaviconFile,
 		URL:  "/favicon.ico",
+	}))
+}
+
+func corsMiddleware(app *fiber.App) {
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "localhost",
+		AllowHeaders: "Origin, Content-Type, Accept",
 	}))
 }
 

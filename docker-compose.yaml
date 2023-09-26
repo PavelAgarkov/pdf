@@ -18,7 +18,7 @@ services:
     build: .
     volumes:
       - ..:/www/src
-    command: go run main.go -buildvcs=false
+    command: tail -f /dev/null
     working_dir: /www/src/pdf
     ports:
       - "3000:3000"

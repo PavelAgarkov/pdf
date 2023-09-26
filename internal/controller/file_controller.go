@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"io/fs"
 	"path/filepath"
@@ -16,10 +17,15 @@ type FileController struct {
 
 type Response struct {
 	str string
+	err error
 }
 
 func (r *Response) GetStr() string {
 	return r.str
+}
+
+func (r *Response) GetErr() error {
+	return r.err
 }
 
 func NewFileController(bc *BaseController) *FileController {
@@ -41,6 +47,8 @@ func (f *FileController) Handle(
 		cr := make(chan ResponseInterface)
 		start := make(chan struct{})
 
+		//v := c.Cookies("X-HASH")
+		//fmt.Println(v)
 		filename := filesPath + c.Params("filename")
 		go realHandler(start, cr, filename)
 
@@ -52,12 +60,21 @@ func (f *FileController) Handle(
 		}
 
 		if res.GetStr() == "redirect" {
-			return c.RedirectToRoute("root", map[string]interface{}{})
+			fmt.Println(res.GetErr().Error())
+			name := filesPath + "ServiceAgreement_template.zip"
+			//return c.RedirectToRoute("root", map[string]interface{}{})
+			c.Accepts("application/pdf")
+			c.Accepts("application/zip")
+			c.Accepts("application/x-bzip")
+			c.Accepts("application/x-tar")
+			c.Accepts("application/x-7z-compressed")
+			return c.Download(name, "ServiceAgreement_template.zip")
 		}
+		c.Request()
 
-		if res.GetStr() == "download" {
-			return c.Download(filename)
-		}
+		//if res.GetStr() == "download" {
+		//	return c.Download(filesPath)
+		//}
 
 		return nil
 	}
@@ -81,7 +98,7 @@ func realHandler(start chan struct{}, ch chan ResponseInterface, filename string
 	)
 
 	if err != nil {
-		ch <- &Response{str: "redirect"}
+		ch <- &Response{str: "redirect", err: err}
 		return
 	}
 	ch <- &Response{str: "download"}

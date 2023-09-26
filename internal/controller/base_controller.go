@@ -11,6 +11,7 @@ type BaseController struct{}
 
 type ResponseInterface interface {
 	GetStr() string
+	GetErr() error
 }
 
 func NewBaseController() *BaseController {

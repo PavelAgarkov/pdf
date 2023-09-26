@@ -23,6 +23,9 @@ func Router(
 	loggerFactory logger.Logger,
 ) {
 	bc := controller.NewBaseController()
-	app.Get("/download/:filename", controller.NewFileController(bc).Handle(ctx, FilesPath, loggerFactory)).
-		Name("file-download")
+	app.Get("/download/", controller.NewFileController(bc).Handle(ctx, FilesPath, loggerFactory)).
+		Name("download")
+
+	app.Post("/empty/", controller.NewEmptyController(bc).Handle(ctx, loggerFactory)).
+		Name("empty")
 }

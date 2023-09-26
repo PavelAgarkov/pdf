@@ -1,7 +1,11 @@
-#!/bin/zsh -e
+#!/bin/bash -e
+
+. ~/.nvm/nvm.sh
+. ~/.profile
+. ~/.bashrc
 
 using() {
-    echo "Укажите команду при запуске: ./monolit.sh [command]"
+    echo "Укажите команду при запуске: ./help.sh [command]"
 }
 
 go_build() {
@@ -10,25 +14,25 @@ go_build() {
   go build
 }
 
-go_run_after_build() {
-  go_build &&
-  ./pdf
+nwm_switch_to_18() {
+  nvm use 18
 }
 
-frontend_build() {
-  cd frontend/ &&
-  pwd &&
-  nvm use 18 &&
-  npm run build &&
-  cd ..
+start_pdf_with_build() {
+  cd pdf-frontend/ &&
+   pwd &&
+    nwm_switch_to_18 &&
+     npm run build &&
+      cd ../ &&
+       go build -race &&
+        ./pdf
 }
 
 
-operation="$1"
-if [[ -z "$command" ]]; then
-    using
-    exit 0
+if declare -f "$1" > /dev/null
+then
+  "$@"
 else
-    # shellcheck disable=SC2068
-    $command $@
+  echo "'$1' is not a known function name" >&2
+  exit
 fi
