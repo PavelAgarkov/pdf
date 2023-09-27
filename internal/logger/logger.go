@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 )
 
 const (
@@ -36,7 +37,7 @@ func GetLoggerFactory() *Factory {
 
 func (l *Factory) PanicLog(logText string, withStack string) {
 	l.panicSem <- 1
-	logFile := l.openLogFile(PanicLog, logDir)
+	logFile := l.openLogFile(filepath.FromSlash(PanicLog), filepath.FromSlash(logDir))
 	defer func(logFile *os.File) {
 		err := logFile.Close()
 		if err != nil {
@@ -51,7 +52,7 @@ func (l *Factory) PanicLog(logText string, withStack string) {
 
 func (l *Factory) ErrorLog(logText string, withStack string) {
 	l.errSem <- 1
-	logFile := l.openLogFile(ErrLog, logDir)
+	logFile := l.openLogFile(filepath.FromSlash(ErrLog), filepath.FromSlash(logDir))
 	defer func(logFile *os.File) {
 		err := logFile.Close()
 		if err != nil {
@@ -66,7 +67,7 @@ func (l *Factory) ErrorLog(logText string, withStack string) {
 
 func (l *Factory) WarningLog(logText string) {
 	l.warnSem <- 1
-	logFile := l.openLogFile(WarningLog, logDir)
+	logFile := l.openLogFile(filepath.FromSlash(WarningLog), filepath.FromSlash(logDir))
 	defer func(logFile *os.File) {
 		err := logFile.Close()
 		if err != nil {
@@ -80,7 +81,7 @@ func (l *Factory) WarningLog(logText string) {
 
 func (l *Factory) InfoLog(logText string) {
 	l.infoSem <- 1
-	logFile := l.openLogFile(InfoLog, logDir)
+	logFile := l.openLogFile(filepath.FromSlash(InfoLog), filepath.FromSlash(logDir))
 	defer func(logFile *os.File) {
 		err := logFile.Close()
 		if err != nil {
@@ -94,7 +95,7 @@ func (l *Factory) InfoLog(logText string) {
 
 func (l *Factory) FrontendLog(logText string) {
 	l.frontSem <- 1
-	logFile := l.openLogFile(FrontendLog, logDir)
+	logFile := l.openLogFile(filepath.FromSlash(FrontendLog), filepath.FromSlash(logDir))
 	defer func(logFile *os.File) {
 		err := logFile.Close()
 		if err != nil {

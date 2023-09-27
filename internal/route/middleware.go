@@ -4,6 +4,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/favicon"
+	"path/filepath"
 	"pdf/internal/controller"
 	"pdf/internal/logger"
 	"pdf/internal/storage"
@@ -19,7 +20,7 @@ func Middleware(app *fiber.App, operationStorage *storage.OperationStorage, logg
 func faviconMiddleware(app *fiber.App) {
 	app.Use(favicon.New(favicon.Config{
 		File: FaviconFile,
-		URL:  "/favicon.ico",
+		URL:  filepath.FromSlash("/favicon.ico"),
 	}))
 }
 

@@ -10,30 +10,30 @@ import (
 	"time"
 )
 
-type EmptyController struct {
+type MergeController struct {
 	bc *BaseController
 }
 
-type EmptyResponse struct {
+type MergeResponse struct {
 	str string
 	err error
 }
 
-func NewEmptyController(bc *BaseController) *EmptyController {
-	return &EmptyController{
+func NewMergeController(bc *BaseController) *MergeController {
+	return &MergeController{
 		bc: bc,
 	}
 }
 
-func (r *EmptyResponse) GetStr() string {
+func (r *MergeResponse) GetStr() string {
 	return r.str
 }
 
-func (r *EmptyResponse) GetErr() error {
+func (r *MergeResponse) GetErr() error {
 	return r.err
 }
 
-func (f *EmptyController) Handle(
+func (f *MergeController) Handle(
 	ctx context.Context,
 	loggerFactory *logger.Factory,
 ) func(c *fiber.Ctx) error {

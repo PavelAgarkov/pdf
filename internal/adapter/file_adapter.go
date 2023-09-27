@@ -2,6 +2,7 @@ package adapter
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -24,7 +25,7 @@ func (fa *FileAdapter) GetAlias() string {
 // после чего положить операцию в хранилище
 
 func (fa *FileAdapter) CreateDir(dirPath string, perm os.FileMode) error {
-	err := os.Mkdir(dirPath, perm)
+	err := os.Mkdir(filepath.FromSlash(dirPath), perm)
 	if err != nil {
 		return err
 	}
@@ -32,7 +33,7 @@ func (fa *FileAdapter) CreateDir(dirPath string, perm os.FileMode) error {
 }
 
 func (fa *FileAdapter) GetAllEntriesFromDir(path, format string) (map[string]string, error) {
-	entries, err := os.ReadDir(path)
+	entries, err := os.ReadDir(filepath.FromSlash(path))
 	mapFiles := make(map[string]string)
 
 	if err != nil {

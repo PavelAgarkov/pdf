@@ -20,3 +20,5 @@ go tool trace trace.out
 это для обновления компилированных изменений
 3. docker exec -it node-local sh -----> npm run build
 4. docker exec -it pdf-pdf-1 sh -----> go run main.go
+
+GOOS=windows GOARCH=amd64 go build -buildvcs=false
