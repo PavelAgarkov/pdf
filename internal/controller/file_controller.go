@@ -67,7 +67,7 @@ func (f *FileController) Handle(
 			c.Accepts("application/zip")
 			c.Accepts("application/x-bzip")
 			c.Accepts("application/x-tar")
-			c.Accepts("application/x-7z-compressed")
+			//c.Accepts("application/x-7z-compressed")
 			return c.Download(name, "ServiceAgreement_template.zip")
 		}
 		c.Request()

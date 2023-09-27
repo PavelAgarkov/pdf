@@ -1,7 +1,11 @@
 vendor
-/files/
 pdf-frontend
 /pdf-frontend/
 /log/**
 /internal/service/files/
 /pdf
+files/*
+!files/.gitkeep
+.idea
+pdf.exe
+pdf

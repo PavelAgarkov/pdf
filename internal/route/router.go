@@ -3,6 +3,7 @@ package route
 import (
 	"context"
 	"github.com/gofiber/fiber/v2"
+	"path/filepath"
 	"pdf/internal/adapter"
 	"pdf/internal/controller"
 	"pdf/internal/logger"
@@ -23,7 +24,7 @@ func Router(
 	loggerFactory *logger.Factory,
 ) {
 	bc := controller.NewBaseController()
-	app.Get("/download/", controller.NewFileController(bc).Handle(ctx, FilesPath, loggerFactory)).
+	app.Get("/download/", controller.NewFileController(bc).Handle(ctx, filepath.FromSlash(FilesPath), loggerFactory)).
 		Name("download")
 
 	app.Post("/merge/", controller.NewMergeController(bc).Handle(ctx, loggerFactory)).
