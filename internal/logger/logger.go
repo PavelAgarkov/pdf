@@ -3,8 +3,6 @@ package logger
 import (
 	"errors"
 	"fmt"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"log"
 	"os"
 )
@@ -18,93 +16,94 @@ const (
 	FrontendLog = "./log/frontend.log"
 )
 
-const (
-	PanicName    = "panic"
-	ErrorName    = "error"
-	WarningName  = "warning"
-	InfoName     = "info"
-	FrontendName = "frontend"
-)
-
-type Logger interface {
-	FlushLogs(logger Logger)
-	GetLogger(name string) *zap.SugaredLogger
-}
-
 type Factory struct {
-	panicLogger    *zap.SugaredLogger
-	errLogger      *zap.SugaredLogger
-	warningLogger  *zap.SugaredLogger
-	infoLogger     *zap.SugaredLogger
-	frontendLogger *zap.SugaredLogger
+	errSem   chan int
+	warnSem  chan int
+	panicSem chan int
+	infoSem  chan int
+	frontSem chan int
 }
 
-func GetMapLogger() map[string]string {
-	return map[string]string{
-		PanicName:    PanicLog,
-		ErrorName:    ErrLog,
-		WarningName:  WarningLog,
-		InfoName:     InfoLog,
-		FrontendName: FrontendLog,
-	}
-}
-
-func GetLoggerFactory(name map[string]string) Logger {
-	l := Factory{}
-	return l.initLogger(name)
-}
-
-func (l *Factory) GetLogger(name string) *zap.SugaredLogger {
-	switch name {
-	case PanicName:
-		return l.panicLogger
-	case ErrorName:
-		return l.errLogger
-	case WarningName:
-		return l.warningLogger
-	case InfoName:
-		return l.infoLogger
-	case FrontendName:
-		return l.frontendLogger
-	default:
-		return nil
-	}
-}
-
-func (l *Factory) FlushLogs(logger Logger) {
-	fmt.Println("\nFlush logger ... ")
-	_ = logger.GetLogger(PanicName).Sync()
-	_ = logger.GetLogger(ErrorName).Sync()
-	_ = logger.GetLogger(WarningName).Sync()
-	_ = logger.GetLogger(InfoName).Sync()
-	_ = logger.GetLogger(FrontendName).Sync()
-
-}
-
-func (l *Factory) initLogger(name map[string]string) Logger {
+func GetLoggerFactory() *Factory {
 	return &Factory{
-		panicLogger:    l.initLoggerLevel(l.openLogFile(name[PanicName], logDir), zap.PanicLevel),
-		errLogger:      l.initLoggerLevel(l.openLogFile(name[ErrorName], logDir), zap.ErrorLevel),
-		warningLogger:  l.initLoggerLevel(l.openLogFile(name[WarningName], logDir), zap.WarnLevel),
-		infoLogger:     l.initLoggerLevel(l.openLogFile(name[InfoName], logDir), zap.InfoLevel),
-		frontendLogger: l.initLoggerLevel(l.openLogFile(name[FrontendName], logDir), zap.ErrorLevel),
+		errSem:   make(chan int, 1),
+		warnSem:  make(chan int, 1),
+		panicSem: make(chan int, 1),
+		infoSem:  make(chan int, 1),
+		frontSem: make(chan int, 1),
 	}
 }
 
-func (*Factory) initLoggerLevel(f *os.File, level zapcore.Level) *zap.SugaredLogger {
-	config := zap.NewProductionEncoderConfig()
-	config.EncodeTime = zapcore.TimeEncoderOfLayout("2006-01-02 15:04:05")
+func (l *Factory) PanicLog(logText string, withStack string) {
+	l.panicSem <- 1
+	logFile := l.openLogFile(PanicLog, logDir)
+	defer func(logFile *os.File) {
+		err := logFile.Close()
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+		<-l.panicSem
+	}(logFile)
+	log.SetOutput(logFile)
 
-	fileEncoder := zapcore.NewJSONEncoder(config)
-	consoleEncoder := zapcore.NewConsoleEncoder(config)
+	l.withStackPrint(withStack, logText)
+}
 
-	core := zapcore.NewTee(
-		zapcore.NewCore(fileEncoder, zapcore.AddSync(f), level),
-		zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stdout), level),
-	)
-	logger := zap.New(core)
+func (l *Factory) ErrorLog(logText string, withStack string) {
+	l.errSem <- 1
+	logFile := l.openLogFile(ErrLog, logDir)
+	defer func(logFile *os.File) {
+		err := logFile.Close()
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+		<-l.errSem
+	}(logFile)
+	log.SetOutput(logFile)
 
-	return logger.Sugar()
+	l.withStackPrint(withStack, logText)
+}
+
+func (l *Factory) WarningLog(logText string) {
+	l.warnSem <- 1
+	logFile := l.openLogFile(WarningLog, logDir)
+	defer func(logFile *os.File) {
+		err := logFile.Close()
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+		<-l.warnSem
+	}(logFile)
+	log.SetOutput(logFile)
+	log.Println(logText)
+}
+
+func (l *Factory) InfoLog(logText string) {
+	l.infoSem <- 1
+	logFile := l.openLogFile(InfoLog, logDir)
+	defer func(logFile *os.File) {
+		err := logFile.Close()
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+		<-l.infoSem
+	}(logFile)
+	log.SetOutput(logFile)
+	log.Println(logText)
+}
+
+func (l *Factory) FrontendLog(logText string) {
+	l.frontSem <- 1
+	logFile := l.openLogFile(FrontendLog, logDir)
+	defer func(logFile *os.File) {
+		err := logFile.Close()
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+		<-l.frontSem
+	}(logFile)
+	log.SetOutput(logFile)
+	log.Println(logText)
 }
 
 func (l *Factory) openLogFile(fname string, dirname string) *os.File {
@@ -126,4 +125,12 @@ func (l *Factory) openLogFile(fname string, dirname string) *os.File {
 	file, _ := os.OpenFile(fname, os.O_WRONLY|os.O_APPEND, 0666)
 
 	return file
+}
+
+func (l *Factory) withStackPrint(withStack, logText string) {
+	if withStack != "" {
+		log.Println(logText + " ;; STACK ;; " + withStack)
+	} else {
+		log.Println(logText)
+	}
 }

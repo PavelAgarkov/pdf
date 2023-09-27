@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
+	"go.uber.org/zap"
 	"pdf/internal/hash"
 	"pdf/internal/logger"
 	"time"
@@ -34,7 +35,7 @@ func (r *EmptyResponse) GetErr() error {
 
 func (f *EmptyController) Handle(
 	ctx context.Context,
-	loggerFactory logger.Logger,
+	loggerFactory *logger.Factory,
 ) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		payload := struct {
@@ -51,6 +52,8 @@ func (f *EmptyController) Handle(
 				files = append(files, fileHeader.Filename)
 			}
 		}
+		loggerFactory.ErrorLog("errrprrrrrrr", zap.Stack("").String)
+		loggerFactory.WarningLog("errrprrrrrrr")
 
 		fv := form.Value["key"]
 		_ = c.BodyParser(&payload)
@@ -60,7 +63,7 @@ func (f *EmptyController) Handle(
 		defer cancel()
 
 		return c.JSON(fiber.Map{
-			"one":  "goooo",
+			"one":  payload.Key,
 			"hash": hash.GenerateFirstLevelHash(),
 		})
 	}

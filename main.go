@@ -43,11 +43,10 @@ func runServer() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	loggerFactory := logger.GetLoggerFactory(logger.GetMapLogger())
+	loggerFactory := logger.GetLoggerFactory()
 
 	defer recoveryFunction(loggerFactory)
 	defer cleanupTasks(loggerFactory)
-	defer loggerFactory.FlushLogs(loggerFactory)
 
 	operationStorage := storage.NewInMemoryOperationStorage()
 	operationStorage.Run(ctx, pdf_operation.Timer5)
@@ -72,15 +71,15 @@ func runServer() {
 		_ = app.ShutdownWithContext(ctx)
 		cancel()
 		serverShutdown.Done()
-		loggerFactory.GetLogger(logger.ErrorName).Error("Gracefully shutting down... Server STOPPED")
+		loggerFactory.ErrorLog("Gracefully shutting down... Server STOPPED", "")
 		return
 	}()
 
 	if err := app.Listen(address); err != nil {
-		loggerFactory.
-			GetLogger(logger.PanicName).
-			With(zap.Stack("stackTrace")).
-			Panic(fmt.Sprintf("server is stopped by error %s", err.Error()))
+		loggerFactory.PanicLog(
+			fmt.Sprintf("server is stopped by error %s", err.Error()),
+			zap.Stack("stackTrace").String,
+		)
 		return
 	}
 
@@ -89,12 +88,12 @@ func runServer() {
 	return
 }
 
-func recoveryFunction(loggerFactory logger.Logger) {
+func recoveryFunction(loggerFactory *logger.Factory) {
 	if r := recover(); r != nil {
-		loggerFactory.GetLogger(logger.ErrorName).Error("Recovered. Error:\n", r)
+		loggerFactory.ErrorLog(fmt.Sprintf("Recovered. Error:\n", r), "")
 	}
 }
 
-func cleanupTasks(loggerFactory logger.Logger) {
-	loggerFactory.GetLogger(logger.ErrorName).Error("Running cleanup tasks...")
+func cleanupTasks(loggerFactory *logger.Factory) {
+	loggerFactory.ErrorLog("Running cleanup tasks...", "")
 }

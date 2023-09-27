@@ -20,7 +20,7 @@ func Router(
 	operationStorage *storage.OperationStorage,
 	operationFactory *pdf_operation.OperationsFactory,
 	adapterLocator *adapter.Locator,
-	loggerFactory logger.Logger,
+	loggerFactory *logger.Factory,
 ) {
 	bc := controller.NewBaseController()
 	app.Get("/download/", controller.NewFileController(bc).Handle(ctx, FilesPath, loggerFactory)).

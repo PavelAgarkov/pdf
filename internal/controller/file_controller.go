@@ -37,7 +37,7 @@ func NewFileController(bc *BaseController) *FileController {
 func (f *FileController) Handle(
 	ctx context.Context,
 	filesPath string,
-	loggerFactory logger.Logger,
+	loggerFactory *logger.Factory,
 ) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		defer RestoreController(loggerFactory, c)

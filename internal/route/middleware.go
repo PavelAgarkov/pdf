@@ -9,10 +9,10 @@ import (
 	"pdf/internal/storage"
 )
 
-func Middleware(app *fiber.App, operationStorage *storage.OperationStorage, factory logger.Logger) {
+func Middleware(app *fiber.App, operationStorage *storage.OperationStorage, loggerFactory *logger.Factory) {
 	faviconMiddleware(app)
 	corsMiddleware(app)
-	recoveryHandleRequestMiddleware(app, factory)
+	recoveryHandleRequestMiddleware(app, loggerFactory)
 	routs404RedirectMiddleware(app)
 }
 
@@ -30,7 +30,7 @@ func corsMiddleware(app *fiber.App) {
 	}))
 }
 
-func recoveryHandleRequestMiddleware(app *fiber.App, loggerFactory logger.Logger) {
+func recoveryHandleRequestMiddleware(app *fiber.App, loggerFactory *logger.Factory) {
 	app.Use(func(c *fiber.Ctx) error {
 		defer controller.RestoreController(loggerFactory, c)
 		return c.Next()

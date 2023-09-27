@@ -1,5 +1,10 @@
 Логирование стека вызовов - loggerFactory.GetLogger(logger.ErrorName).With(zap.Stack("stackTrace")).Error("errror")
 
+
+cat /proc/sys/fs/file-max --- файловые дескрипторы
+lsof | wc -l ---- открытые
+lsof | grep pdf/ | wc -l
+
 анализ трейса
 f, _ := os.Create("trace.out")
 trace.Start(f)
