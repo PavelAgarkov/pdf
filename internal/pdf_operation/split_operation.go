@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"github.com/pdfcpu/pdfcpu/pkg/api"
 	"os"
+	"pdf/internal"
 	"pdf/internal/adapter"
+	"pdf/internal/locator"
 	"slices"
 	"strconv"
 )
@@ -17,12 +19,12 @@ const (
 
 type SplitOperation struct {
 	baseOperation *BaseOperation
-	splitDir      adapter.SplitDir
+	splitDir      internal.SplitDir
 }
 
 func NewSplitOperation(
 	bo *BaseOperation,
-	splitDir adapter.SplitDir,
+	splitDir internal.SplitDir,
 ) *SplitOperation {
 	return &SplitOperation{
 		baseOperation: bo,
@@ -38,14 +40,14 @@ func (so *SplitOperation) GetBaseOperation() *BaseOperation {
 	return so.baseOperation
 }
 
-func (so *SplitOperation) GetSplitDir() adapter.SplitDir {
+func (so *SplitOperation) GetSplitDir() internal.SplitDir {
 	return so.splitDir
 }
 
 // делать это в контроллере после выполнения операции и вставлять в хранилище эту структуру
 //operationData := NewOperationData(bo.GetUserData(), bo.archiveDir, bo.status, bo.stoppedReason)
 
-func (so *SplitOperation) Execute(ctx context.Context, locator *adapter.Locator, format string) (string, error) {
+func (so *SplitOperation) Execute(ctx context.Context, locator *locator.Locator, format string) (string, error) {
 	defer func() {
 		_ = os.RemoveAll(string(so.GetBaseOperation().GetInDir()))
 		_ = os.RemoveAll(string(so.GetBaseOperation().GetOutDir()))
@@ -53,12 +55,12 @@ func (so *SplitOperation) Execute(ctx context.Context, locator *adapter.Locator,
 	}()
 
 	bo := so.GetBaseOperation()
-	bo.SetStatus(StatusProcessed)
+	bo.SetStatus(internal.StatusProcessed)
 
 	splitIntervals := bo.GetConfiguration().GetSplitIntervals()
 	if splitIntervals == nil {
 		err := errors.New("can't execute operation SPLIT, no intervals: %w")
-		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(err.Error()))
+		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(err.Error()))
 		return "", err
 	}
 
@@ -66,14 +68,14 @@ func (so *SplitOperation) Execute(ctx context.Context, locator *adapter.Locator,
 
 	if len(allPaths) > 1 {
 		err := errors.New("operation SPLIT can't have more 1 file")
-		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(err.Error()))
+		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(err.Error()))
 		return "", err
 	}
 
 	firstFile := allPaths[0]
 
 	pathAdapter := locator.Locate(adapter.PathAlias).(*adapter.PathAdapter)
-	_, file, err := pathAdapter.StepBack(adapter.Path(firstFile))
+	_, file, err := pathAdapter.StepBack(internal.Path(firstFile))
 
 	inFile := string(bo.GetInDir()) + file
 
@@ -83,7 +85,7 @@ func (so *SplitOperation) Execute(ctx context.Context, locator *adapter.Locator,
 
 	if err != nil || pageCount < maxValue {
 		wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: page coun less interval %w", inFile, err)
-		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(wrapErr.Error()))
+		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(wrapErr.Error()))
 		return "", wrapErr
 	}
 
@@ -92,7 +94,7 @@ func (so *SplitOperation) Execute(ctx context.Context, locator *adapter.Locator,
 
 	if err != nil {
 		wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: %w", inFile, err)
-		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(wrapErr.Error()))
+		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(wrapErr.Error()))
 		return "", wrapErr
 	}
 
@@ -101,7 +103,7 @@ func (so *SplitOperation) Execute(ctx context.Context, locator *adapter.Locator,
 
 	if err != nil {
 		wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: cant read split dir  %w", inFile, err)
-		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(wrapErr.Error()))
+		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(wrapErr.Error()))
 		return "", wrapErr
 	}
 
@@ -109,7 +111,7 @@ func (so *SplitOperation) Execute(ctx context.Context, locator *adapter.Locator,
 
 	if err != nil {
 		wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: cant read out dir  %w", inFile, err)
-		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(wrapErr.Error()))
+		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(wrapErr.Error()))
 		return "", wrapErr
 	}
 
@@ -117,7 +119,7 @@ func (so *SplitOperation) Execute(ctx context.Context, locator *adapter.Locator,
 
 	if err != nil {
 		wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: cant read out dir  %w", inFile, err)
-		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(wrapErr.Error()))
+		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(wrapErr.Error()))
 		return "", wrapErr
 	}
 
@@ -134,11 +136,11 @@ func (so *SplitOperation) Execute(ctx context.Context, locator *adapter.Locator,
 
 	if err != nil {
 		wrapErr := fmt.Errorf("can't execute operation SPLIT : can't achivation %s:  %w", archivePath, err)
-		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(wrapErr.Error()))
+		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(wrapErr.Error()))
 		return "", wrapErr
 	}
 
-	bo.SetStatus(StatusAwaitingDownload)
+	bo.SetStatus(internal.StatusAwaitingDownload)
 	return archivePath, nil
 }
 
@@ -164,7 +166,7 @@ func (so *SplitOperation) mergeFiles(
 				return wrapErr
 			}
 
-			_, newPath, err := pathAdapter.StepForward(adapter.Path(so.GetSplitDir()), find)
+			_, newPath, err := pathAdapter.StepForward(internal.Path(so.GetSplitDir()), find)
 			if err != nil {
 				wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: can't build filepath  %w", inFile, err)
 				return wrapErr

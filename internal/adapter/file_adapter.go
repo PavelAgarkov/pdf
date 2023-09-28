@@ -21,7 +21,7 @@ func (fa *FileAdapter) GetAlias() string {
 }
 
 // перед операцией необходимо создать все необходимые
-// директории GenerateOutDirPath() GenerateDirPathToFiles() GenerateDirPathToFiles() и записать их в операцию,
+// директории GenerateOutDirPath() GenerateRootDir() и записать их в операцию,
 // после чего положить операцию в хранилище
 
 func (fa *FileAdapter) CreateDir(dirPath string, perm os.FileMode) error {

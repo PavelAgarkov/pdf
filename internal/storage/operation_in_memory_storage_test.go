@@ -3,9 +3,11 @@ package storage
 import (
 	"context"
 	"fmt"
+	"pdf/internal"
 	"pdf/internal/adapter"
 	"pdf/internal/entity"
 	"pdf/internal/hash"
+	"pdf/internal/locator"
 	"pdf/internal/logger"
 	"pdf/internal/pdf_operation"
 	"testing"
@@ -14,7 +16,7 @@ import (
 
 func Test_user_in_memory_storage_test(t *testing.T) {
 	p := adapter.NewPathAdapter()
-	adapterLocator := adapter.NewAdapterLocator(
+	adapterLocator := locator.NewAdapterLocator(
 		adapter.NewFileAdapter(),
 		adapter.NewPathAdapter(),
 		adapter.NewPdfAdapter(),
@@ -27,16 +29,16 @@ func Test_user_in_memory_storage_test(t *testing.T) {
 
 	loggerFactory := logger.NewLoggerFactory()
 	uStorage := NewInMemoryOperationStorage()
-	uStorage.Run(ctx, pdf_operation.Timer5, adapterLocator, loggerFactory)
+	uStorage.Run(ctx, internal.Timer5, adapterLocator, loggerFactory)
 
 	firstLevelHash := hash.GenerateFirstLevelHash()
 	secondLevelHash := hash.GenerateNextLevelHashByPrevious(firstLevelHash, true)
 
 	conf := pdf_operation.NewConfiguration(nil, nil, nil)
-	expired := time.Now().Add(pdf_operation.Timer5)
+	expired := time.Now().Add(internal.Timer5)
 
 	inDir := pathAdapter.GenerateInDirPath(secondLevelHash)
-	dirPath := pathAdapter.GenerateDirPathToFiles(secondLevelHash)
+	rootDir := pathAdapter.GenerateRootDir(secondLevelHash)
 	outDir := pathAdapter.GenerateOutDirPath(secondLevelHash)
 	archiveDir := pathAdapter.GenerateArchiveDirPath(secondLevelHash)
 
@@ -44,7 +46,7 @@ func Test_user_in_memory_storage_test(t *testing.T) {
 	ud := entity.NewUserData(firstLevelHash, secondLevelHash, expired)
 
 	operationFactory := pdf_operation.NewOperationFactory()
-	mergePagesOperation := operationFactory.CreateNewOperation(conf, ud, files, dirPath, inDir, outDir, archiveDir, "", pdf_operation.DestinationMerge)
+	mergePagesOperation := operationFactory.CreateNewOperation(conf, ud, files, rootDir, inDir, outDir, archiveDir, "", pdf_operation.DestinationMerge)
 
 	operationData := pdf_operation.NewOperationData(
 		ud,

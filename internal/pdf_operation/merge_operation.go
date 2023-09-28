@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"pdf/internal"
 	"pdf/internal/adapter"
+	"pdf/internal/locator"
 )
 
 const (
@@ -30,20 +32,20 @@ func (mo *MergeOperation) GetBaseOperation() *BaseOperation {
 	return mo.baseOperation
 }
 
-func (mo *MergeOperation) Execute(ctx context.Context, locator *adapter.Locator, format string) (string, error) {
+func (mo *MergeOperation) Execute(ctx context.Context, locator *locator.Locator, format string) (string, error) {
 	defer func() {
 		_ = os.RemoveAll(string(mo.GetBaseOperation().GetInDir()))
 		_ = os.RemoveAll(string(mo.GetBaseOperation().GetOutDir()))
 	}()
 
 	bo := mo.GetBaseOperation()
-	bo.SetStatus(StatusProcessed)
+	bo.SetStatus(internal.StatusProcessed)
 
 	inFiles := bo.GetAllPaths()
 
 	if len(inFiles) <= 1 {
 		err := errors.New("operation MERGE can't have less 1 file")
-		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(err.Error()))
+		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(err.Error()))
 		return "", err
 	}
 
@@ -54,14 +56,14 @@ func (mo *MergeOperation) Execute(ctx context.Context, locator *adapter.Locator,
 
 	if err != nil {
 		wrapErr := fmt.Errorf("can't execute operation MERGE to files %s: %w", inFiles, err)
-		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(wrapErr.Error()))
+		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(wrapErr.Error()))
 		return "", wrapErr
 	}
 
 	err = pdfAdapter.Optimize(outFile, outFile)
 	if err != nil {
 		wrapErr := fmt.Errorf("can't optimize operation MERGE to file %s: %w", outFile, err)
-		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(wrapErr.Error()))
+		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(wrapErr.Error()))
 		return "", wrapErr
 	}
 
@@ -82,10 +84,10 @@ func (mo *MergeOperation) Execute(ctx context.Context, locator *adapter.Locator,
 
 	if err != nil {
 		wrapErr := fmt.Errorf("can't execute operation MERGE : can't achivation %s:  %w", archivePath, err)
-		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(wrapErr.Error()))
+		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(wrapErr.Error()))
 		return "", wrapErr
 	}
 
-	bo.SetStatus(StatusAwaitingDownload)
+	bo.SetStatus(internal.StatusAwaitingDownload)
 	return archivePath, nil
 }

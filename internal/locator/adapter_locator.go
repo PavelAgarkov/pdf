@@ -1,4 +1,4 @@
-package adapter
+package locator
 
 type Adapter interface {
 	GetAlias() string

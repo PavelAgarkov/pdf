@@ -5,16 +5,18 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"pdf/internal"
 	"pdf/internal/adapter"
 	"pdf/internal/entity"
 	"pdf/internal/hash"
+	"pdf/internal/locator"
 	"testing"
 	"time"
 )
 
 func Test_cut(t *testing.T) {
 	p := adapter.NewPathAdapter()
-	adapterLocator := adapter.NewAdapterLocator(
+	adapterLocator := locator.NewAdapterLocator(
 		adapter.NewFileAdapter(),
 		p,
 		adapter.NewPdfAdapter(),
@@ -26,10 +28,10 @@ func Test_cut(t *testing.T) {
 
 	firstLevelHash := hash.GenerateFirstLevelHash()
 	secondLevelHash := hash.GenerateNextLevelHashByPrevious(firstLevelHash, true)
-	expired := time.Now().Add(Timer5)
+	expired := time.Now().Add(internal.Timer5)
 
 	inDir := pathAdapter.GenerateInDirPath(secondLevelHash)
-	dirPath := pathAdapter.GenerateDirPathToFiles(secondLevelHash)
+	rootDir := pathAdapter.GenerateRootDir(secondLevelHash)
 	outDir := pathAdapter.GenerateOutDirPath(secondLevelHash)
 	archiveDir := pathAdapter.GenerateArchiveDirPath(secondLevelHash)
 
@@ -38,13 +40,13 @@ func Test_cut(t *testing.T) {
 		filepath.FromSlash("./files/ServiceAgreement_template.pdf"),
 	}
 
-	_, file0, _ := pathAdapter.StepBack(adapter.Path(filesForReplace[0]))
-	_, file1, _ := pathAdapter.StepBack(adapter.Path(filesForReplace[1]))
+	_, file0, _ := pathAdapter.StepBack(internal.Path(filesForReplace[0]))
+	_, file1, _ := pathAdapter.StepBack(internal.Path(filesForReplace[1]))
 	f0, _ := os.ReadFile(filesForReplace[0])
 	f1, _ := os.ReadFile(filesForReplace[1])
 
 	fileAdapter := adapterLocator.Locate(adapter.FileAlias).(*adapter.FileAdapter)
-	err := fileAdapter.CreateDir(string(dirPath), 0777)
+	err := fileAdapter.CreateDir(string(rootDir), 0777)
 	err = fileAdapter.CreateDir(string(inDir), 0777)
 	err = fileAdapter.CreateDir(string(outDir), 0777)
 	err = fileAdapter.CreateDir(string(archiveDir), 0777)
@@ -55,10 +57,10 @@ func Test_cut(t *testing.T) {
 	ud := entity.NewUserData(firstLevelHash, secondLevelHash, expired)
 
 	operationFactory := NewOperationFactory()
-	mergePagesOperation := operationFactory.CreateNewOperation(conf, ud, files, dirPath, inDir, outDir, archiveDir, "", DestinationMerge)
+	mergePagesOperation := operationFactory.CreateNewOperation(conf, ud, files, rootDir, inDir, outDir, archiveDir, "", DestinationMerge)
 
 	ctx := context.Background()
-	_, err = mergePagesOperation.Execute(ctx, adapterLocator, adapter.ZipFormat)
+	_, err = mergePagesOperation.Execute(ctx, adapterLocator, internal.ZipFormat)
 
 	if err != nil {
 		fmt.Println(err.Error())

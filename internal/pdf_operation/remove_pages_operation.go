@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"pdf/internal"
 	"pdf/internal/adapter"
+	"pdf/internal/locator"
 )
 
 const (
@@ -30,19 +32,19 @@ func (rpo *RemovePagesOperation) GetBaseOperation() *BaseOperation {
 	return rpo.baseOperation
 }
 
-func (rpo *RemovePagesOperation) Execute(ctx context.Context, locator *adapter.Locator, format string) (string, error) {
+func (rpo *RemovePagesOperation) Execute(ctx context.Context, locator *locator.Locator, format string) (string, error) {
 	defer func() {
 		_ = os.RemoveAll(string(rpo.GetBaseOperation().GetInDir()))
 		_ = os.RemoveAll(string(rpo.GetBaseOperation().GetOutDir()))
 	}()
 
 	bo := rpo.GetBaseOperation()
-	bo.SetStatus(StatusProcessed)
+	bo.SetStatus(internal.StatusProcessed)
 
 	removeIntervals := bo.GetConfiguration().GetRemovePagesIntervals()
 	if removeIntervals == nil {
 		err := errors.New("can't execute operation REMOVE_PAGES, no intervals: %w")
-		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(err.Error()))
+		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(err.Error()))
 		return "", err
 	}
 
@@ -50,14 +52,14 @@ func (rpo *RemovePagesOperation) Execute(ctx context.Context, locator *adapter.L
 
 	if len(allPaths) > 1 {
 		err := errors.New("operation REMOVE_PAGES can't have more 1 file")
-		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(err.Error()))
+		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(err.Error()))
 		return "", err
 	}
 
 	firstFile := allPaths[0]
 
 	pathAdapter := locator.Locate(adapter.PathAlias).(*adapter.PathAdapter)
-	_, file, err := pathAdapter.StepBack(adapter.Path(firstFile))
+	_, file, err := pathAdapter.StepBack(internal.Path(firstFile))
 
 	inFile := string(bo.GetInDir()) + file
 
@@ -67,14 +69,14 @@ func (rpo *RemovePagesOperation) Execute(ctx context.Context, locator *adapter.L
 
 	if err != nil {
 		wrapErr := fmt.Errorf("can't execute operation REMOVE_PAGES to file %s: %w", inFile, err)
-		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(wrapErr.Error()))
+		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(wrapErr.Error()))
 		return "", wrapErr
 	}
 
 	err = pdfAdapter.Optimize(outFile, outFile)
 	if err != nil {
 		wrapErr := fmt.Errorf("can't optimize operation REMOVE_PAGES to file %s: %w", inFile, err)
-		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(wrapErr.Error()))
+		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(wrapErr.Error()))
 		return "", wrapErr
 	}
 
@@ -94,10 +96,10 @@ func (rpo *RemovePagesOperation) Execute(ctx context.Context, locator *adapter.L
 
 	if err != nil {
 		wrapErr := fmt.Errorf("can't execute operation MERGE : can't achivation %s:  %w", archivePath, err)
-		bo.SetStatus(StatusCanceled).SetStoppedReason(StoppedReason(wrapErr.Error()))
+		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(wrapErr.Error()))
 		return "", wrapErr
 	}
 
-	bo.SetStatus(StatusAwaitingDownload)
+	bo.SetStatus(internal.StatusAwaitingDownload)
 	return archivePath, nil
 }

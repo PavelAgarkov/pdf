@@ -6,15 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-)
-
-const (
-	logDir      = "./log"
-	PanicLog    = "./log/panic.log"
-	ErrLog      = "./log/error.log"
-	WarningLog  = "./log/warning.log"
-	InfoLog     = "./log/info.log"
-	FrontendLog = "./log/frontend.log"
+	"pdf/internal"
 )
 
 type Factory struct {
@@ -37,7 +29,7 @@ func NewLoggerFactory() *Factory {
 
 func (l *Factory) PanicLog(logText string, withStack string) {
 	l.panicSem <- 1
-	logFile := l.openLogFile(filepath.FromSlash(PanicLog), filepath.FromSlash(logDir))
+	logFile := l.openLogFile(filepath.FromSlash(internal.PanicLog), filepath.FromSlash(internal.LogDir))
 	defer func(logFile *os.File) {
 		err := logFile.Close()
 		if err != nil {
@@ -52,7 +44,7 @@ func (l *Factory) PanicLog(logText string, withStack string) {
 
 func (l *Factory) ErrorLog(logText string, withStack string) {
 	l.errSem <- 1
-	logFile := l.openLogFile(filepath.FromSlash(ErrLog), filepath.FromSlash(logDir))
+	logFile := l.openLogFile(filepath.FromSlash(internal.ErrLog), filepath.FromSlash(internal.LogDir))
 	defer func(logFile *os.File) {
 		err := logFile.Close()
 		if err != nil {
@@ -67,7 +59,7 @@ func (l *Factory) ErrorLog(logText string, withStack string) {
 
 func (l *Factory) WarningLog(logText string) {
 	l.warnSem <- 1
-	logFile := l.openLogFile(filepath.FromSlash(WarningLog), filepath.FromSlash(logDir))
+	logFile := l.openLogFile(filepath.FromSlash(internal.WarningLog), filepath.FromSlash(internal.LogDir))
 	defer func(logFile *os.File) {
 		err := logFile.Close()
 		if err != nil {
@@ -81,7 +73,7 @@ func (l *Factory) WarningLog(logText string) {
 
 func (l *Factory) InfoLog(logText string) {
 	l.infoSem <- 1
-	logFile := l.openLogFile(filepath.FromSlash(InfoLog), filepath.FromSlash(logDir))
+	logFile := l.openLogFile(filepath.FromSlash(internal.InfoLog), filepath.FromSlash(internal.LogDir))
 	defer func(logFile *os.File) {
 		err := logFile.Close()
 		if err != nil {
@@ -95,7 +87,7 @@ func (l *Factory) InfoLog(logText string) {
 
 func (l *Factory) FrontendLog(logText string) {
 	l.frontSem <- 1
-	logFile := l.openLogFile(filepath.FromSlash(FrontendLog), filepath.FromSlash(logDir))
+	logFile := l.openLogFile(filepath.FromSlash(internal.FrontendLog), filepath.FromSlash(internal.LogDir))
 	defer func(logFile *os.File) {
 		err := logFile.Close()
 		if err != nil {

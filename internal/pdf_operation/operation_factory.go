@@ -1,7 +1,7 @@
 package pdf_operation
 
 import (
-	"pdf/internal/adapter"
+	"pdf/internal"
 	"pdf/internal/entity"
 )
 
@@ -15,14 +15,14 @@ func (*OperationsFactory) CreateNewOperation(
 	configuration *OperationConfiguration,
 	ud *entity.UserData,
 	files []string,
-	dirPathFile adapter.DirPath,
-	inDir adapter.InDir,
-	outDit adapter.OutDir,
-	archiveDir adapter.ArchiveDir,
-	splitPath adapter.SplitDir,
-	destination Destination,
+	rootDir internal.RootDir,
+	inDir internal.InDir,
+	outDit internal.OutDir,
+	archiveDir internal.ArchiveDir,
+	splitPath internal.SplitDir,
+	destination internal.Destination,
 ) Operation {
-	bo := NewBaseOperation(configuration, ud, files, dirPathFile, inDir, outDit, archiveDir, destination)
+	bo := NewBaseOperation(configuration, ud, files, rootDir, inDir, outDit, archiveDir, destination)
 
 	switch destination {
 	case DestinationMerge:

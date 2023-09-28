@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"github.com/google/uuid"
+	"pdf/internal"
 )
 
 // генерируем хэш первого порядка и делаем по нему хэш второго порядка + соль(его записываем в хранилище)
@@ -11,17 +12,10 @@ import (
 // когда пользователь отправляет его назад(хэш первго порядка), то мы по нему генерируем хэш второго(с солью) и
 // по нему находим в хранилище данные. В итоговую ссылку на скачивание будем добавлять хэш 1-го уровня и название архива
 
-const (
-	salt = "1af1dfa857bf1d8814fe1af898 3c18080019922e557f15a8a"
-)
-
-type Hash1lvl string
-type Hash2lvl string
-
-func GenerateNextLevelHashByPrevious(firstHah Hash1lvl, withSalt bool) Hash2lvl {
+func GenerateNextLevelHashByPrevious(firstHah internal.Hash1lvl, withSalt bool) internal.Hash2lvl {
 	var stringToHash string
 	if withSalt {
-		stringToHash = string(firstHah) + salt
+		stringToHash = string(firstHah) + internal.Salt
 	} else {
 		stringToHash = string(firstHah)
 	}
@@ -30,15 +24,15 @@ func GenerateNextLevelHashByPrevious(firstHah Hash1lvl, withSalt bool) Hash2lvl 
 	bs := sha256h.Sum(nil)
 	sha256str := hex.EncodeToString(bs)
 
-	return Hash2lvl(sha256str)
+	return internal.Hash2lvl(sha256str)
 }
 
-func GenerateFirstLevelHash() Hash1lvl {
+func GenerateFirstLevelHash() internal.Hash1lvl {
 	uuHash := uuid.New().String()
 	sha256h := sha256.New()
 	sha256h.Write([]byte(uuHash))
 	bs := sha256h.Sum(nil)
 	sha256str := hex.EncodeToString(bs)
 
-	return Hash1lvl(sha256str)
+	return internal.Hash1lvl(sha256str)
 }

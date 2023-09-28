@@ -8,7 +8,9 @@ import (
 	"go.uber.org/zap"
 	"os"
 	"os/signal"
+	"pdf/internal"
 	"pdf/internal/adapter"
+	"pdf/internal/locator"
 	"pdf/internal/logger"
 	"pdf/internal/pdf_operation"
 	"pdf/internal/route"
@@ -27,16 +29,15 @@ func main() {
 
 func runServer() {
 	pathAdapter := adapter.NewPathAdapter()
-	adapterLocator := adapter.NewAdapterLocator(
+	adapterLocator := locator.NewAdapterLocator(
 		adapter.NewFileAdapter(),
 		pathAdapter,
 		adapter.NewPdfAdapter(),
 		adapter.NewArchiveAdapter(pathAdapter),
+		adapter.NewCookiesAdapter(),
 	)
 	engine := html.New(adapter.GenerateFrontendDist(), ".html")
-	app := fiber.New(fiber.Config{
-		Views: engine,
-	})
+	app := fiber.New(fiber.Config{Views: engine})
 
 	sig := make(chan os.Signal)
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGKILL)
@@ -49,7 +50,7 @@ func runServer() {
 	defer cleanupTasks(loggerFactory)
 
 	operationStorage := storage.NewInMemoryOperationStorage()
-	operationStorage.Run(ctx, pdf_operation.Timer5, adapterLocator, loggerFactory)
+	operationStorage.Run(ctx, internal.Timer5, adapterLocator, loggerFactory)
 
 	operationFactory := pdf_operation.NewOperationFactory()
 
@@ -62,17 +63,20 @@ func runServer() {
 		adapterLocator,
 		loggerFactory,
 	)
-	route.Middleware(app, operationStorage, loggerFactory)
+	route.Middleware(app, loggerFactory)
 
 	var serverShutdown sync.WaitGroup
 	go func() {
 		_ = <-sig
+		cancel()
+	}()
+
+	go func() {
+		<-ctx.Done()
 		serverShutdown.Add(1)
 		_ = app.ShutdownWithContext(ctx)
-		cancel()
 		serverShutdown.Done()
 		loggerFactory.ErrorLog("Gracefully shutting down... Server STOPPED", "")
-		return
 	}()
 
 	if err := app.Listen(address); err != nil {

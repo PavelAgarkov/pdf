@@ -5,16 +5,11 @@ import (
 	"fmt"
 	"github.com/mholt/archiver/v4"
 	"os"
-	"pdf/internal/hash"
+	"pdf/internal"
 )
 
 const (
 	ArchiveAlias = "archive"
-
-	ZipFormat    = ".zip"
-	ZipZstFormat = ".zip.zst"
-	TarFormat    = ".tar"
-	TarGzFormat  = ".tar.gz"
 )
 
 type ArchiveAdapter struct {
@@ -38,7 +33,7 @@ func (aa *ArchiveAdapter) GetAlias() string {
 
 func (aa *ArchiveAdapter) CreateCompressor(format string) (*Compressor, error) {
 	switch format {
-	case TarFormat:
+	case internal.TarFormat:
 		return &Compressor{
 			format: format,
 			compressedArchive: archiver.CompressedArchive{
@@ -46,7 +41,7 @@ func (aa *ArchiveAdapter) CreateCompressor(format string) (*Compressor, error) {
 				Archival:    archiver.Tar{},
 			},
 		}, nil
-	case TarGzFormat:
+	case internal.TarGzFormat:
 		return &Compressor{
 			format: format,
 			compressedArchive: archiver.CompressedArchive{
@@ -54,7 +49,7 @@ func (aa *ArchiveAdapter) CreateCompressor(format string) (*Compressor, error) {
 				Archival:    archiver.Tar{},
 			},
 		}, nil
-	case ZipZstFormat:
+	case internal.ZipZstFormat:
 		return &Compressor{
 			format: format,
 			compressedArchive: archiver.CompressedArchive{
@@ -62,7 +57,7 @@ func (aa *ArchiveAdapter) CreateCompressor(format string) (*Compressor, error) {
 				Archival:    archiver.Zip{},
 			},
 		}, nil
-	case ZipFormat:
+	case internal.ZipFormat:
 		return &Compressor{
 			format: format,
 			compressedArchive: archiver.CompressedArchive{
@@ -79,15 +74,15 @@ func (aa *ArchiveAdapter) Archive(
 	ctx context.Context,
 	compressor *Compressor,
 	outDirFilesMap map[string]string,
-	hash2lvl hash.Hash2lvl,
-	archiveDir ArchiveDir,
+	hash2lvl internal.Hash2lvl,
+	archiveDir internal.ArchiveDir,
 ) (string, error) {
 	files, err := archiver.FilesFromDisk(nil, outDirFilesMap)
 	if err != nil {
 		return "", fmt.Errorf("can't prepare files for archive: %w", err)
 	}
 
-	_, archiveName, err := aa.pathAdapter.StepForward(Path(archiveDir), string(hash2lvl)+compressor.format)
+	_, archiveName, err := aa.pathAdapter.StepForward(internal.Path(archiveDir), string(hash2lvl)+compressor.format)
 	if err != nil {
 		return "", fmt.Errorf("can't step forward with path %s: %w", string(archiveDir), err)
 	}
