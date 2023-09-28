@@ -44,8 +44,7 @@ func (s *OperationStorage) Run(
 			select {
 			case <-ctx.Done():
 				s.clearAllFiles(adapterLocator, loggerFactory)
-				//s.Clear()
-				s.sm = sync.Map{}
+				s.Clear()
 			case <-tickerSetExpired.C:
 				now := time.Now()
 				s.setExpired(now)

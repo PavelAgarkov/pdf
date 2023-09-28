@@ -8,6 +8,7 @@ import (
 	"pdf/internal/adapter"
 	"pdf/internal/locator"
 	"pdf/internal/logger"
+	"pdf/internal/service"
 	"pdf/internal/storage"
 )
 
@@ -42,30 +43,26 @@ func (cc *CancelController) Handle(
 	return func(c *fiber.Ctx) error {
 		defer RestoreController(loggerFactory, c, "cancel controller")
 
-		operationData, hit := operationStorage.Get(internal.Hash2lvl(c.Cookies(internal.AuthenticationKey)))
+		authToken := service.ParseBearerHeader(c.GetReqHeaders()[internal.AuthenticationHeader])
+		operationData, hit := operationStorage.Get(internal.Hash2lvl(authToken))
 		if !hit {
-			errMsg := fmt.Sprintf("cancel controller: can't find hit %s from storage", internal.Hash2lvl(c.Cookies(internal.AuthenticationKey)))
+			errMsg := fmt.Sprintf("cancel controller: can't find hit %s from storage", authToken)
 			loggerFactory.ErrorLog(errMsg, "")
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"error": errMsg,
 			})
 		}
 
-		cookiesAdapter := adapterLocator.Locate(adapter.CookiesAlias).(*adapter.CookiesAdapter)
-		ok, err := cookiesAdapter.IsAuthenticated(
-			operationData.GetUserData().GetHash2Lvl(),
-			internal.Hash1lvl(c.Cookies(internal.AuthenticationKey)),
-			hit,
-		)
+		ok, err := service.IsAuthenticated(operationData.GetUserData().GetHash2Lvl(), internal.Hash1lvl(authToken))
 		if err != nil {
-			errMsg := fmt.Sprintf("cancel controller: can't delete %s from storage", internal.Hash2lvl(c.Cookies(internal.AuthenticationKey)))
+			errMsg := fmt.Sprintf("cancel controller: can't delete %s from storage", authToken)
 			loggerFactory.ErrorLog(fmt.Sprintf(errMsg+" %s", err.Error()), "")
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"error": errMsg,
 			})
 		}
 		if !ok {
-			errMsg := fmt.Sprintf("cancel controller: can't acces to %s files by hash", internal.Hash2lvl(c.Cookies(internal.AuthenticationKey)))
+			errMsg := fmt.Sprintf("cancel controller: can't acces to %s files by hash", authToken)
 			loggerFactory.ErrorLog(errMsg, "")
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"error": errMsg,

@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-type FileController struct {
+type DownloadController struct {
 	bc *BaseController
 }
 
@@ -28,13 +28,13 @@ func (r *Response) GetErr() error {
 	return r.err
 }
 
-func NewFileController(bc *BaseController) *FileController {
-	return &FileController{
+func NewDownloadController(bc *BaseController) *DownloadController {
+	return &DownloadController{
 		bc: bc,
 	}
 }
 
-func (f *FileController) Handle(
+func (f *DownloadController) Handle(
 	ctx context.Context,
 	filesPath string,
 	loggerFactory *logger.Factory,
@@ -47,7 +47,6 @@ func (f *FileController) Handle(
 		cr := make(chan ResponseInterface)
 		start := make(chan struct{})
 
-		//v := c.Cookies("X-HASH")
 		//fmt.Println(v)
 		filename := filesPath + c.Params("filename")
 		go realHandler(start, cr, filename)

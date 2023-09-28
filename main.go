@@ -34,7 +34,6 @@ func runServer() {
 		pathAdapter,
 		adapter.NewPdfAdapter(),
 		adapter.NewArchiveAdapter(pathAdapter),
-		adapter.NewCookiesAdapter(),
 	)
 	engine := html.New(adapter.GenerateFrontendDist(), ".html")
 	app := fiber.New(fiber.Config{Views: engine})

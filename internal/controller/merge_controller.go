@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
-	"pdf/internal/hash"
+	"pdf/internal"
 	"pdf/internal/logger"
+	"pdf/internal/service"
+	"pdf/internal/storage"
 	"time"
 )
 
@@ -35,6 +37,7 @@ func (r *MergeResponse) GetErr() error {
 
 func (f *MergeController) Handle(
 	ctx context.Context,
+	operationStorage *storage.OperationStorage,
 	loggerFactory *logger.Factory,
 ) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
@@ -63,14 +66,32 @@ func (f *MergeController) Handle(
 		_, cancel := context.WithTimeout(ctx, 10*time.Second)
 		defer cancel()
 
-		hashCookie := ""
-		if v := c.Cookies("X-HASH"); v == "" {
-			hashCookie = string(hash.GenerateFirstLevelHash())
+		newHashToBearer := ""
+		authToken := service.ParseBearerHeader(c.GetReqHeaders()[internal.AuthenticationHeader])
+		operationData, hit := operationStorage.Get(internal.Hash2lvl(authToken))
+		if !hit {
+			errMsg := fmt.Sprintf("cancel controller: can't find hit %s from storage", authToken)
+			loggerFactory.ErrorLog(errMsg, "")
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": errMsg,
+			})
+		}
+		ok, err := service.IsAuthenticated(operationData.GetUserData().GetHash2Lvl(), internal.Hash1lvl(authToken))
+		if err != nil {
+			errMsg := fmt.Sprintf("cancel controller: can't delete %s from storage", authToken)
+			loggerFactory.ErrorLog(fmt.Sprintf(errMsg+" %s", err.Error()), "")
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": errMsg,
+			})
+		}
+
+		if !ok {
+			newHashToBearer = service.GenerateBearerToken()
 		}
 
 		return c.JSON(fiber.Map{
 			"one":  payload.Key,
-			"hash": hashCookie,
+			"hash": newHashToBearer,
 		})
 	}
 }
