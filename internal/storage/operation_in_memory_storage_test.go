@@ -6,6 +6,7 @@ import (
 	"pdf/internal/adapter"
 	"pdf/internal/entity"
 	"pdf/internal/hash"
+	"pdf/internal/logger"
 	"pdf/internal/pdf_operation"
 	"testing"
 	"time"
@@ -23,8 +24,10 @@ func Test_user_in_memory_storage_test(t *testing.T) {
 
 	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(5*time.Second))
 	defer cancel()
+
+	loggerFactory := logger.NewLoggerFactory()
 	uStorage := NewInMemoryOperationStorage()
-	uStorage.Run(ctx, pdf_operation.Timer5)
+	uStorage.Run(ctx, pdf_operation.Timer5, adapterLocator, loggerFactory)
 
 	firstLevelHash := hash.GenerateFirstLevelHash()
 	secondLevelHash := hash.GenerateNextLevelHashByPrevious(firstLevelHash, true)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"pdf/internal/adapter"
 	"pdf/internal/entity"
 	"pdf/internal/hash"
@@ -36,7 +37,7 @@ func Test_split(t *testing.T) {
 
 	ud := entity.NewUserData(firstLevelHash, secondLevelHash, expired)
 
-	filesForReplace := []string{"./files/ServiceAgreement_template.pdf"}
+	filesForReplace := []string{filepath.FromSlash("./files/ServiceAgreement_template.pdf")}
 	_, file0, _ := pathAdapter.StepBack(adapter.Path(filesForReplace[0]))
 	f, _ := os.ReadFile(filesForReplace[0])
 

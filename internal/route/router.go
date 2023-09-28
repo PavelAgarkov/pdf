@@ -27,6 +27,9 @@ func Router(
 	app.Get("/download/", controller.NewFileController(bc).Handle(ctx, filepath.FromSlash(FilesPath), loggerFactory)).
 		Name("download")
 
+	app.Get("/cancel/", controller.NewCancelController(bc).Handle(ctx, filepath.FromSlash(FilesPath), loggerFactory)).
+		Name("cancel")
+
 	app.Post("/merge/", controller.NewMergeController(bc).Handle(ctx, loggerFactory)).
 		Name("merge")
 }

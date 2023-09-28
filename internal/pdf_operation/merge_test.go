@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"pdf/internal/adapter"
 	"pdf/internal/entity"
 	"pdf/internal/hash"
@@ -32,7 +33,10 @@ func Test_cut(t *testing.T) {
 	outDir := pathAdapter.GenerateOutDirPath(secondLevelHash)
 	archiveDir := pathAdapter.GenerateArchiveDirPath(secondLevelHash)
 
-	filesForReplace := []string{"./files/ServiceAgreement_template.pdf", "./files/ServiceAgreement_template.pdf"}
+	filesForReplace := []string{
+		filepath.FromSlash("./files/ServiceAgreement_template.pdf"),
+		filepath.FromSlash("./files/ServiceAgreement_template.pdf"),
+	}
 
 	_, file0, _ := pathAdapter.StepBack(adapter.Path(filesForReplace[0]))
 	_, file1, _ := pathAdapter.StepBack(adapter.Path(filesForReplace[1]))

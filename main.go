@@ -43,13 +43,13 @@ func runServer() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	loggerFactory := logger.GetLoggerFactory()
+	loggerFactory := logger.NewLoggerFactory()
 
 	defer recoveryFunction(loggerFactory)
 	defer cleanupTasks(loggerFactory)
 
 	operationStorage := storage.NewInMemoryOperationStorage()
-	operationStorage.Run(ctx, pdf_operation.Timer5)
+	operationStorage.Run(ctx, pdf_operation.Timer5, adapterLocator, loggerFactory)
 
 	operationFactory := pdf_operation.NewOperationFactory()
 

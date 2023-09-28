@@ -3,6 +3,7 @@ package adapter
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"path/filepath"
 	"testing"
 )
 
@@ -10,7 +11,7 @@ func Test_remove_pages(t *testing.T) {
 	pa := NewPathAdapter()
 
 	expected := "ServiceAgreement_template.pdf"
-	resource := "./files/ServiceAgreement_template.pdf"
+	resource := filepath.FromSlash("./files/ServiceAgreement_template.pdf")
 	path, last, err := pa.StepBack(Path(resource))
 
 	if err != nil {
@@ -33,8 +34,8 @@ func Test_add_pages(t *testing.T) {
 	pa := NewPathAdapter()
 
 	resource := "ServiceAgreement_template.pdf"
-	old := "./files/"
-	expected := "./files/ServiceAgreement_template.pdf"
+	old := filepath.FromSlash("./files/")
+	expected := filepath.FromSlash("./files/ServiceAgreement_template.pdf")
 	path, newPath, err := pa.StepForward(Path(old), resource)
 
 	if err != nil {

@@ -25,7 +25,7 @@ type Factory struct {
 	frontSem chan int
 }
 
-func GetLoggerFactory() *Factory {
+func NewLoggerFactory() *Factory {
 	return &Factory{
 		errSem:   make(chan int, 1),
 		warnSem:  make(chan int, 1),

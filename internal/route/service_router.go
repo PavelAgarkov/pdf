@@ -1,6 +1,9 @@
 package route
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"github.com/gofiber/fiber/v2"
+	"path/filepath"
+)
 
 func ServiceRouter(app *fiber.App) {
 	// root render vue
@@ -9,5 +12,5 @@ func ServiceRouter(app *fiber.App) {
 	}).Name("root")
 
 	// assets for vue
-	app.Static("/assets/", FrontendAssets).Name("assets")
+	app.Static("/assets/", filepath.FromSlash(FrontendAssets)).Name("assets")
 }

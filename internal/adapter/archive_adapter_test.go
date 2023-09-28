@@ -5,19 +5,20 @@ import (
 	"fmt"
 	"github.com/mholt/archiver/v4"
 	"os"
+	"path/filepath"
 	"testing"
 )
 
 func Test_archive_rar_adapter_test(t *testing.T) {
 	files, err := archiver.FilesFromDisk(nil, map[string]string{
-		"./files/ServiceAgreement_template.pdf":  "ServiceAgreement_template.pdf",
-		"./files/ServiceAgreement_template1.pdf": "ServiceAgreement_template1.pdf",
+		filepath.FromSlash("./files/ServiceAgreement_template.pdf"):  "ServiceAgreement_template.pdf",
+		filepath.FromSlash("./files/ServiceAgreement_template1.pdf"): "ServiceAgreement_template1.pdf",
 	})
 	if err != nil {
 		fmt.Println(err.Error())
 	}
 
-	out, err := os.Create("./files/archive.zip.zst")
+	out, err := os.Create(filepath.FromSlash("./files/archive.zip.zst"))
 	if err != nil {
 		fmt.Println(err.Error())
 	}

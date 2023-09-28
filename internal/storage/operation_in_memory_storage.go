@@ -2,13 +2,17 @@ package storage
 
 import (
 	"context"
+	"fmt"
+	"go.uber.org/zap"
+	"os"
+	"pdf/internal/adapter"
 	"pdf/internal/hash"
+	"pdf/internal/logger"
 	"pdf/internal/pdf_operation"
 	"sync"
 	"time"
 )
 
-// OperationStorage т.к. теперь у операций есть пользователь, а не наоборот
 type OperationStorage struct {
 	sm sync.Map
 }
@@ -19,20 +23,20 @@ func NewInMemoryOperationStorage() *OperationStorage {
 	}
 }
 
-func (s *OperationStorage) Run(ctx context.Context, tickerTimer time.Duration) {
+func (s *OperationStorage) Run(ctx context.Context, tickerTimer time.Duration, adapterLocator *adapter.Locator, loggerFactory *logger.Factory) {
 	tickerSetExpired := time.NewTicker(tickerTimer)
 	tickerCleaner := time.NewTicker(tickerTimer * 2)
 	go func() {
 		for {
 			select {
 			case <-ctx.Done():
-				s.ClearAll()
-				// удалить все файлы по операциям
+				s.clearAllFiles(adapterLocator, loggerFactory)
+				s.Clear()
 			case <-tickerSetExpired.C:
 				now := time.Now()
 				s.setExpired(now)
 			case <-tickerCleaner.C:
-				s.clearExpired()
+				s.clearExpired(adapterLocator, loggerFactory)
 			default:
 			}
 		}
@@ -43,7 +47,6 @@ func (s *OperationStorage) setExpired(now time.Time) {
 	s.sm.Range(
 		func(key interface{}, value interface{}) bool {
 			operation := value.(pdf_operation.OperationDataInterface)
-			//uDur := operation.GetBaseOperation().GetUserData().GetExpiredAt().Unix()
 			uDur := operation.GetUserData().GetExpiredAt().Unix()
 			nDur := now.Unix()
 
@@ -57,24 +60,38 @@ func (s *OperationStorage) setExpired(now time.Time) {
 		})
 }
 
-func (s *OperationStorage) clearExpired() {
+func (s *OperationStorage) clearExpired(adapterLocator *adapter.Locator, loggerFactory *logger.Factory) {
 	s.sm.Range(
 		func(key interface{}, value interface{}) bool {
 			operation := value.(pdf_operation.OperationDataInterface)
-			//bo := operation.GetBaseOperation()
-
 			if operation.CanDeleted() {
+				pathAdapter := adapterLocator.Locate(adapter.PathAlias).(*adapter.PathAdapter)
+				rootDir := string(pathAdapter.GenerateDirPathToFiles(operation.GetUserData().GetHash2Lvl()))
+				err := os.RemoveAll(rootDir)
+				if err != nil {
+					loggerFactory.PanicLog(fmt.Sprintf("storage: can't remove dir %s", rootDir), zap.Stack("").String)
+					return false
+				}
 				s.Delete(key.(hash.Hash2lvl))
-				// тут нужно удалять все файлы для этой операции
 				return true
 			}
-
-			return false
+			return true
 		})
 }
 
-func (s *OperationStorage) ClearAll() {
-	s.Clear()
+func (s *OperationStorage) clearAllFiles(adapterLocator *adapter.Locator, loggerFactory *logger.Factory) {
+	s.sm.Range(
+		func(key interface{}, value interface{}) bool {
+			operation := value.(pdf_operation.OperationDataInterface)
+			pathAdapter := adapterLocator.Locate(adapter.PathAlias).(*adapter.PathAdapter)
+			rootDir := string(pathAdapter.GenerateDirPathToFiles(operation.GetUserData().GetHash2Lvl()))
+			err := os.RemoveAll(rootDir)
+			if err != nil {
+				loggerFactory.PanicLog(fmt.Sprintf("storage: can't clear all dir %s", rootDir), zap.Stack("").String)
+				return false
+			}
+			return true
+		})
 }
 
 func (s *OperationStorage) Clear() {

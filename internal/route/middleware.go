@@ -19,8 +19,8 @@ func Middleware(app *fiber.App, operationStorage *storage.OperationStorage, logg
 
 func faviconMiddleware(app *fiber.App) {
 	app.Use(favicon.New(favicon.Config{
-		File: FaviconFile,
-		URL:  filepath.FromSlash("/favicon.ico"),
+		File: filepath.FromSlash(FaviconFile),
+		URL:  "/favicon.ico",
 	}))
 }
 

@@ -62,9 +62,14 @@ func (f *MergeController) Handle(
 		_, cancel := context.WithTimeout(ctx, 10*time.Second)
 		defer cancel()
 
+		hashCookie := ""
+		if v := c.Cookies("X-HASH"); v == "" {
+			hashCookie = string(hash.GenerateFirstLevelHash())
+		}
+
 		return c.JSON(fiber.Map{
 			"one":  payload.Key,
-			"hash": hash.GenerateFirstLevelHash(),
+			"hash": hashCookie,
 		})
 	}
 }
