@@ -32,9 +32,9 @@ func (bc *BaseController) SelectResult(
 	}
 }
 
-func RestoreController(loggerFactory *logger.Factory, c *fiber.Ctx) {
+func RestoreController(loggerFactory *logger.Factory, c *fiber.Ctx, destination string) {
 	if r := recover(); r != nil {
-		errStr := fmt.Sprintf("Recovered. Panic: %s\n", r)
+		errStr := fmt.Sprintf(destination+" : Recovered. Panic: %s\n", r)
 		loggerFactory.ErrorLog(errStr, "")
 		err := c.RedirectToRoute("root", map[string]interface{}{})
 		if err != nil {

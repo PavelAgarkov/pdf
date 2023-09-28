@@ -12,13 +12,6 @@ const (
 
 	Salt = "1af1dfa857bf1d8814fe1af898 3c18080019922e557f15a8a"
 
-	LogDir      = "./log"
-	PanicLog    = "./log/panic.log"
-	ErrLog      = "./log/error.log"
-	WarningLog  = "./log/warning.log"
-	InfoLog     = "./log/info.log"
-	FrontendLog = "./log/frontend.log"
-
 	Timer5  = 5 * time.Minute
 	Timer10 = 10 * time.Minute
 	Timer15 = 15 * time.Minute
@@ -29,6 +22,14 @@ const (
 	StatusExpired          = "expired"
 	StatusCanceled         = "canceled"
 	StatusAwaitingDownload = "awaiting_download"
+
+	// для совместимости ОС filepath.FromSlash()
+	LogDir      = "./log"
+	PanicLog    = "./log/panic.log"
+	ErrLog      = "./log/error.log"
+	WarningLog  = "./log/warning.log"
+	InfoLog     = "./log/info.log"
+	FrontendLog = "./log/frontend.log"
 
 	FrontendDist   = "./pdf-frontend/dist"
 	FilesPath      = "./files/"

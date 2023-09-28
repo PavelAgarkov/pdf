@@ -38,6 +38,8 @@ func (f *MergeController) Handle(
 	loggerFactory *logger.Factory,
 ) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
+		defer RestoreController(loggerFactory, c, "empty controller")
+
 		payload := struct {
 			Key string `json:"key"`
 		}{}
@@ -58,7 +60,6 @@ func (f *MergeController) Handle(
 		fv := form.Value["key"]
 		_ = c.BodyParser(&payload)
 		fmt.Println(payload, fv)
-		defer RestoreController(loggerFactory, c)
 		_, cancel := context.WithTimeout(ctx, 10*time.Second)
 		defer cancel()
 

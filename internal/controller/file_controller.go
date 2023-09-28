@@ -40,7 +40,7 @@ func (f *FileController) Handle(
 	loggerFactory *logger.Factory,
 ) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
-		defer RestoreController(loggerFactory, c)
+		defer RestoreController(loggerFactory, c, "file controller")
 		ctxC, cancel := context.WithTimeout(ctx, 10*time.Second)
 		defer cancel()
 

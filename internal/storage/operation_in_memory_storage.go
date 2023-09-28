@@ -33,7 +33,12 @@ func (s *OperationStorage) Run(
 	tickerSetExpired := time.NewTicker(tickerTimer)
 	tickerCleaner := time.NewTicker(tickerTimer * 2)
 	go func(tickerSetExpired, tickerCleaner *time.Ticker) {
-		// defer panic
+		defer func() {
+			if r := recover(); r != nil {
+				errStr := fmt.Sprintf("storage RUN : Recovered. Panic: %s\n", r)
+				loggerFactory.ErrorLog(errStr, "")
+			}
+		}()
 
 		for {
 			select {

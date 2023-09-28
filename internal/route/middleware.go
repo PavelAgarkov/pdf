@@ -33,7 +33,7 @@ func corsMiddleware(app *fiber.App) {
 
 func recoveryHandleRequestMiddleware(app *fiber.App, loggerFactory *logger.Factory) {
 	app.Use(func(c *fiber.Ctx) error {
-		defer controller.RestoreController(loggerFactory, c)
+		defer controller.RestoreController(loggerFactory, c, "recovery middleware")
 		return c.Next()
 	})
 }
