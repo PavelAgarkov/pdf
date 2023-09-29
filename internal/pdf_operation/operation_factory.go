@@ -17,18 +17,18 @@ func (*OperationsFactory) CreateNewOperation(
 	files []string,
 	rootDir internal.RootDir,
 	inDir internal.InDir,
-	outDit internal.OutDir,
+	outDir internal.OutDir,
 	archiveDir internal.ArchiveDir,
-	splitPath internal.SplitDir,
+	splitDir internal.SplitDir,
 	destination internal.Destination,
 ) Operation {
-	bo := NewBaseOperation(configuration, ud, files, rootDir, inDir, outDit, archiveDir, destination)
+	bo := NewBaseOperation(configuration, ud, files, rootDir, inDir, outDir, archiveDir, destination)
 
 	switch destination {
 	case DestinationMerge:
 		return NewMergeOperation(bo)
 	case DestinationSplit:
-		return NewSplitOperation(bo, splitPath)
+		return NewSplitOperation(bo, splitDir)
 	case DestinationRemovePages:
 		return NewRemovePagesOperation(bo)
 	default:

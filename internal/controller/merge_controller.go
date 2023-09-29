@@ -5,10 +5,17 @@ import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
+	"os"
 	"pdf/internal"
+	"pdf/internal/adapter"
+	"pdf/internal/entity"
+	"pdf/internal/hash"
+	"pdf/internal/locator"
 	"pdf/internal/logger"
+	"pdf/internal/pdf_operation"
 	"pdf/internal/service"
 	"pdf/internal/storage"
+	"strings"
 	"time"
 )
 
@@ -35,63 +42,131 @@ func (r *MergeResponse) GetErr() error {
 	return r.err
 }
 
-func (f *MergeController) Handle(
+func (mc *MergeController) Handle(
 	ctx context.Context,
 	operationStorage *storage.OperationStorage,
+	operationFactory *pdf_operation.OperationsFactory,
+	adapterLocator *locator.Locator,
 	loggerFactory *logger.Factory,
 ) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
-		defer RestoreController(loggerFactory, c, "empty controller")
+		defer RestoreController(loggerFactory, c, "merge controller")
 
-		payload := struct {
-			Key string `json:"key"`
-		}{}
-
-		files := make([]string, 0)
-		form, err := c.MultipartForm()
-		if err != nil {
-			/* handle error */
-		}
-		for _, fileHeaders := range form.File {
-			for _, fileHeader := range fileHeaders {
-				files = append(files, fileHeader.Filename)
-			}
-		}
-		loggerFactory.ErrorLog("errrprrrrrrr", zap.Stack("").String)
-		loggerFactory.WarningLog("errrprrrrrrr")
-
-		fv := form.Value["key"]
-		_ = c.BodyParser(&payload)
-		fmt.Println(payload, fv)
-		_, cancel := context.WithTimeout(ctx, 10*time.Second)
-		defer cancel()
-
-		newHashToBearer := ""
 		authToken := service.ParseBearerHeader(c.GetReqHeaders()[internal.AuthenticationHeader])
-		operationData, hit := operationStorage.Get(internal.Hash2lvl(authToken))
-		if !hit {
-			errMsg := fmt.Sprintf("cancel controller: can't find hit %s from storage", authToken)
+		_, hit := operationStorage.Get(internal.Hash2lvl(authToken))
+		if hit {
+			errMsg := fmt.Sprintf("merge controller: can't process %s from storage", authToken)
 			loggerFactory.ErrorLog(errMsg, "")
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"error": errMsg,
 			})
 		}
-		ok, err := service.IsAuthenticated(operationData.GetUserData().GetHash2Lvl(), internal.Hash1lvl(authToken))
-		if err != nil {
-			errMsg := fmt.Sprintf("cancel controller: can't delete %s from storage", authToken)
-			loggerFactory.ErrorLog(fmt.Sprintf(errMsg+" %s", err.Error()), "")
+
+		authToken = service.GenerateBearerToken()
+
+		ctxC, cancel := context.WithTimeout(ctx, 3*time.Second)
+		defer cancel()
+		cr := make(chan ResponseInterface)
+		start := make(chan struct{})
+
+		go mc.realHandler(c, ctxC, start, cr, operationStorage, operationFactory, adapterLocator, authToken)
+		res := mc.bc.SelectResult(ctxC, cr, start)
+
+		if res.GetStr() != "ok" {
+			loggerFactory.ErrorLog(res.GetErr().Error(), zap.Stack("").String)
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"error": errMsg,
+				"error": "yes",
 			})
 		}
 
-		if !ok {
-			newHashToBearer = service.GenerateBearerToken()
-		}
-
-		return c.JSON(fiber.Map{
-			"one":  payload.Key,
-			"hash": newHashToBearer,
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
+			"hash":  authToken,
+			"error": "no",
 		})
 	}
+}
+
+func (mc *MergeController) realHandler(
+	c *fiber.Ctx,
+	ctx context.Context,
+	start chan struct{},
+	cr chan ResponseInterface,
+	operationStorage *storage.OperationStorage,
+	operationFactory *pdf_operation.OperationsFactory,
+	adapterLocator *locator.Locator,
+	authToken string,
+) {
+	<-start
+
+	secondLevelHash := hash.GenerateNextLevelHashByPrevious(internal.Hash1lvl(authToken), true)
+	pathAdapter := adapterLocator.Locate(adapter.PathAlias).(*adapter.PathAdapter)
+	inDir := pathAdapter.GenerateInDirPath(secondLevelHash)
+	rootDir := pathAdapter.GenerateRootDir(secondLevelHash)
+	outDir := pathAdapter.GenerateOutDirPath(secondLevelHash)
+	archiveDir := pathAdapter.GenerateArchiveDirPath(secondLevelHash)
+	defer func() {
+		_ = os.RemoveAll(string(inDir))
+		_ = os.RemoveAll(string(outDir))
+	}()
+
+	fileAdapter := adapterLocator.Locate(adapter.FileAlias).(*adapter.FileAdapter)
+	err := fileAdapter.CreateDir(string(rootDir), 0777)
+	err = fileAdapter.CreateDir(string(inDir), 0777)
+	err = fileAdapter.CreateDir(string(outDir), 0777)
+	err = fileAdapter.CreateDir(string(archiveDir), 0777)
+	if err != nil {
+		cr <- &MergeResponse{str: "cant_create_dir", err: err}
+		return
+	}
+
+	filesOrder := make([]string, 0)
+	form, errRead := c.MultipartForm()
+	if errRead != nil {
+		cr <- &MergeResponse{str: "cant_read_form", err: errRead}
+		return
+	}
+
+	for _, fileHeaders := range form.File {
+		for _, fileHeader := range fileHeaders {
+			nameWithoutSpace := strings.ReplaceAll(fileHeader.Filename, " ", "_")
+			_, pathToFile, _ := pathAdapter.StepForward(internal.Path(inDir), nameWithoutSpace)
+			errSave := c.SaveFile(fileHeader, string(pathToFile))
+			if errSave != nil {
+				cr <- &MergeResponse{str: "cant_save_file_from_form", err: errSave}
+				return
+			}
+			filesOrder = append(filesOrder, string(pathToFile))
+		}
+	}
+
+	userData := entity.NewUserData(internal.Hash1lvl(authToken), secondLevelHash, time.Now().Add(internal.Timer5))
+	mergePagesOperation := operationFactory.CreateNewOperation(
+		pdf_operation.NewConfiguration(nil, nil, nil),
+		userData,
+		filesOrder,
+		rootDir,
+		inDir,
+		outDir,
+		archiveDir,
+		"",
+		pdf_operation.DestinationMerge,
+	).(*pdf_operation.MergeOperation)
+
+	archivePath, errArch := mergePagesOperation.Execute(ctx, adapterLocator, internal.ZipFormat)
+	if errArch != nil {
+		cr <- &MergeResponse{str: "cant_create_archive", err: errArch}
+		return
+	}
+
+	data := pdf_operation.NewOperationData(
+		userData,
+		internal.ArchiveDir(archivePath),
+		mergePagesOperation.GetBaseOperation().GetStatus(),
+		mergePagesOperation.GetBaseOperation().GetStoppedReason(),
+	)
+
+	operationStorage.Insert(secondLevelHash, data)
+
+	cr <- &MergeResponse{str: "ok", err: nil}
+	return
 }

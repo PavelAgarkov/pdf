@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"pdf/internal"
 	"pdf/internal/adapter"
 	"pdf/internal/locator"
@@ -33,11 +32,6 @@ func (mo *MergeOperation) GetBaseOperation() *BaseOperation {
 }
 
 func (mo *MergeOperation) Execute(ctx context.Context, locator *locator.Locator, format string) (string, error) {
-	defer func() {
-		_ = os.RemoveAll(string(mo.GetBaseOperation().GetInDir()))
-		_ = os.RemoveAll(string(mo.GetBaseOperation().GetOutDir()))
-	}()
-
 	bo := mo.GetBaseOperation()
 	bo.SetStatus(internal.StatusProcessed)
 
