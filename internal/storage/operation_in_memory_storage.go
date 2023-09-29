@@ -39,18 +39,19 @@ func (s *OperationStorage) Run(
 				loggerFactory.ErrorLog(errStr, "")
 			}
 		}()
+		defer func() {
+			tickerSetExpired.Stop()
+			tickerCleaner.Stop()
+		}()
 
 		for {
 			select {
 			case <-ctx.Done():
-				s.clearAllFiles(adapterLocator, loggerFactory)
-				s.Clear()
+				return
 			case <-tickerSetExpired.C:
-				now := time.Now()
-				s.setExpired(now)
+				s.setExpired(time.Now())
 			case <-tickerCleaner.C:
 				s.clearExpired(adapterLocator, loggerFactory)
-			default:
 			}
 		}
 	}(tickerSetExpired, tickerCleaner)
@@ -107,12 +108,20 @@ func (s *OperationStorage) clearAllFiles(adapterLocator *locator.Locator, logger
 		})
 }
 
-func (s *OperationStorage) Clear() {
+func (s *OperationStorage) clear() {
 	s.sm.Range(
 		func(key interface{}, value interface{}) bool {
 			s.Delete(key.(internal.Hash2lvl))
 			return true
 		})
+}
+
+func (s *OperationStorage) ClearStorageAndFilesystem(
+	adapterLocator *locator.Locator,
+	loggerFactory *logger.Factory,
+) {
+	s.clearAllFiles(adapterLocator, loggerFactory)
+	s.clear()
 }
 
 func (s *OperationStorage) Insert(key internal.Hash2lvl, operation pdf_operation.OperationDataInterface) {

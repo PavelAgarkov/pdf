@@ -24,10 +24,10 @@ const (
 )
 
 func main() {
-	runServer()
+	runHTTPServer()
 }
 
-func runServer() {
+func runHTTPServer() {
 	pathAdapter := adapter.NewPathAdapter()
 	adapterLocator := locator.NewAdapterLocator(
 		adapter.NewFileAdapter(),
@@ -42,11 +42,8 @@ func runServer() {
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGKILL)
 
 	ctx, cancel := context.WithCancel(context.Background())
-
 	loggerFactory := logger.NewLoggerFactory()
-
 	defer recoveryFunction(loggerFactory)
-	defer cleanupTasks(loggerFactory)
 
 	operationStorage := storage.NewInMemoryOperationStorage()
 	operationStorage.Run(ctx, internal.Timer5, adapterLocator, loggerFactory)
@@ -64,14 +61,16 @@ func runServer() {
 	)
 	route.Middleware(app, loggerFactory)
 
-	var serverShutdown sync.WaitGroup
 	go func() {
 		_ = <-sig
 		cancel()
 	}()
 
+	var serverShutdown sync.WaitGroup
 	go func() {
+		defer recoveryFunction(loggerFactory)
 		<-ctx.Done()
+		cleanupTasks(operationStorage, adapterLocator, loggerFactory)
 		serverShutdown.Add(1)
 		_ = app.ShutdownWithContext(ctx)
 		serverShutdown.Done()
@@ -81,7 +80,7 @@ func runServer() {
 	if err := app.Listen(address); err != nil {
 		loggerFactory.PanicLog(
 			fmt.Sprintf("server is stopped by error %s", err.Error()),
-			zap.Stack("stackTrace").String,
+			zap.Stack("").String,
 		)
 		return
 	}
@@ -93,10 +92,16 @@ func runServer() {
 
 func recoveryFunction(loggerFactory *logger.Factory) {
 	if r := recover(); r != nil {
-		loggerFactory.ErrorLog(fmt.Sprintf("Recovered. Error:\n", r), "")
+		loggerFactory.PanicLog(fmt.Sprintf("Recovered. Error:\n", r), "")
 	}
 }
 
-func cleanupTasks(loggerFactory *logger.Factory) {
+func cleanupTasks(
+	operationStorage *storage.OperationStorage,
+	adapterLocator *locator.Locator,
+	loggerFactory *logger.Factory,
+) {
 	loggerFactory.ErrorLog("Running cleanup tasks...", "")
+	operationStorage.ClearStorageAndFilesystem(adapterLocator, loggerFactory)
+	loggerFactory.ErrorLog("Running cleanup tasks done", "")
 }
