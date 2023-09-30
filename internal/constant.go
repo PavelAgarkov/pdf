@@ -14,9 +14,11 @@ const (
 
 	Salt = "1af1dfa857bf1d8814fe1af898 3c18080019922e557f15a8a"
 
-	Timer5  = 5 * time.Minute
-	Timer10 = 10 * time.Minute
-	Timer15 = 15 * time.Minute
+	Timer5  = 5
+	Timer10 = 10
+	Timer15 = 15
+
+	Minute = time.Minute
 
 	StatusStarted          = "started"
 	StatusProcessed        = "processed"

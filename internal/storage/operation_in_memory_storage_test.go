@@ -29,13 +29,13 @@ func Test_user_in_memory_storage_test(t *testing.T) {
 
 	loggerFactory := logger.NewLoggerFactory()
 	uStorage := NewInMemoryOperationStorage()
-	uStorage.Run(ctx, internal.Timer5, adapterLocator, loggerFactory)
+	uStorage.Run(ctx, internal.Timer5*internal.Minute, adapterLocator, loggerFactory)
 
 	firstLevelHash := hash.GenerateFirstLevelHash()
 	secondLevelHash := hash.GenerateNextLevelHashByPrevious(firstLevelHash, true)
 
 	conf := pdf_operation.NewConfiguration(nil, nil, nil)
-	expired := time.Now().Add(internal.Timer5)
+	expired := time.Now().Add(internal.Timer5 * internal.Minute)
 
 	inDir := pathAdapter.GenerateInDirPath(secondLevelHash)
 	rootDir := pathAdapter.GenerateRootDir(secondLevelHash)

@@ -28,7 +28,7 @@ func Test_remove_pages(t *testing.T) {
 
 	firstLevelHash := hash.GenerateFirstLevelHash()
 	secondLevelHash := hash.GenerateNextLevelHashByPrevious(firstLevelHash, true)
-	expired := time.Now().Add(internal.Timer5)
+	expired := time.Now().Add(internal.Timer5 * internal.Minute)
 
 	inDir := pathAdapter.GenerateInDirPath(secondLevelHash)
 	rootDir := pathAdapter.GenerateRootDir(secondLevelHash)

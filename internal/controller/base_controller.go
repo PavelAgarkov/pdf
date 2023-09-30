@@ -26,7 +26,11 @@ func (bc *BaseController) SelectResult(
 	start <- struct{}{}
 	select {
 	case <-ctx.Done():
-		return nil
+		res, ok := <-ch
+		if !ok {
+			return nil
+		}
+		return res
 	case res := <-ch:
 		return res
 	}
@@ -34,8 +38,8 @@ func (bc *BaseController) SelectResult(
 
 func RestoreController(loggerFactory *logger.Factory, c *fiber.Ctx, destination string) {
 	if r := recover(); r != nil {
-		errStr := fmt.Sprintf(destination+" : Recovered. Panic: %s\n", r)
-		loggerFactory.ErrorLog(errStr, "")
+		panicStr := fmt.Sprintf(destination+" : Recovered. Panic: %s\n", r)
+		loggerFactory.PanicLog(panicStr, "")
 		err := c.RedirectToRoute("root", map[string]interface{}{})
 		if err != nil {
 			return

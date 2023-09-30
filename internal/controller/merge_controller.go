@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
-	"go.uber.org/zap"
 	"os"
 	"pdf/internal"
 	"pdf/internal/adapter"
@@ -69,19 +68,35 @@ func (mc *MergeController) Handle(
 		cr := make(chan ResponseInterface)
 		start := make(chan struct{})
 
-		go mc.realHandler(c, ctxC, start, cr, operationStorage, operationFactory, adapterLocator, authToken)
+		go mc.realHandler(
+			c,
+			ctxC,
+			start,
+			cr,
+			operationStorage,
+			operationFactory,
+			adapterLocator,
+			authToken,
+		)
 		res := mc.bc.SelectResult(ctxC, cr, start)
+		if res == nil {
+			loggerFactory.PanicLog("merge controller: context expired", "")
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "merge controller: context expired",
+			})
+		}
 
 		if res.GetStr() != "ok" {
-			loggerFactory.ErrorLog(res.GetErr().Error(), zap.Stack("").String)
+			loggerFactory.ErrorLog(res.GetErr().Error(), "")
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"error": "yes",
+				"error": res.GetErr().Error(),
 			})
 		}
 
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{
-			"hash":  authToken,
-			"error": "no",
+			"hash":     authToken,
+			"duration": internal.Timer5,
+			"error":    "no",
 		})
 	}
 }
@@ -104,16 +119,16 @@ func (mc *MergeController) realHandler(
 	rootDir := pathAdapter.GenerateRootDir(secondLevelHash)
 	outDir := pathAdapter.GenerateOutDirPath(secondLevelHash)
 	archiveDir := pathAdapter.GenerateArchiveDirPath(secondLevelHash)
-	defer func() {
-		_ = os.RemoveAll(string(inDir))
-		_ = os.RemoveAll(string(outDir))
-	}()
 
 	fileAdapter := adapterLocator.Locate(adapter.FileAlias).(*adapter.FileAdapter)
 	err := fileAdapter.CreateDir(string(rootDir), 0777)
 	err = fileAdapter.CreateDir(string(inDir), 0777)
 	err = fileAdapter.CreateDir(string(outDir), 0777)
 	err = fileAdapter.CreateDir(string(archiveDir), 0777)
+	defer func() {
+		_ = os.RemoveAll(string(rootDir))
+	}()
+
 	if err != nil {
 		cr <- &MergeResponse{str: "cant_create_dir", err: err}
 		return
@@ -139,7 +154,11 @@ func (mc *MergeController) realHandler(
 		}
 	}
 
-	userData := entity.NewUserData(internal.Hash1lvl(authToken), secondLevelHash, time.Now().Add(internal.Timer5))
+	userData := entity.NewUserData(
+		internal.Hash1lvl(authToken),
+		secondLevelHash,
+		time.Now().Add(internal.Timer5*internal.Minute),
+	)
 	mergePagesOperation := operationFactory.CreateNewOperation(
 		pdf_operation.NewConfiguration(nil, nil, nil),
 		userData,

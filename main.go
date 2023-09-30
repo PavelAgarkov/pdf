@@ -46,7 +46,7 @@ func runHTTPServer() {
 	defer recoveryFunction(loggerFactory)
 
 	operationStorage := storage.NewInMemoryOperationStorage()
-	operationStorage.Run(ctx, internal.Timer5, adapterLocator, loggerFactory)
+	operationStorage.Run(ctx, internal.Timer5*internal.Minute, adapterLocator, loggerFactory)
 
 	operationFactory := pdf_operation.NewOperationFactory()
 
@@ -74,7 +74,7 @@ func runHTTPServer() {
 		serverShutdown.Add(1)
 		_ = app.ShutdownWithContext(ctx)
 		serverShutdown.Done()
-		loggerFactory.ErrorLog("Gracefully shutting down... Server STOPPED", "")
+		loggerFactory.InfoLog("Gracefully shutting down... Server STOPPED")
 	}()
 
 	if err := app.Listen(address); err != nil {
@@ -101,7 +101,7 @@ func cleanupTasks(
 	adapterLocator *locator.Locator,
 	loggerFactory *logger.Factory,
 ) {
-	loggerFactory.ErrorLog("Running cleanup tasks...", "")
+	loggerFactory.InfoLog("Running cleanup tasks...")
 	operationStorage.ClearStorageAndFilesystem(adapterLocator, loggerFactory)
-	loggerFactory.ErrorLog("Running cleanup tasks done", "")
+	loggerFactory.InfoLog("Running cleanup tasks done")
 }
