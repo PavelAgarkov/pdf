@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"os"
@@ -49,7 +50,7 @@ func (mc *MergeController) Handle(
 	loggerFactory *logger.Factory,
 ) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
-		defer RestoreController(loggerFactory, c, "merge controller")
+		defer RestoreController(loggerFactory, "merge controller")
 
 		authToken := service.ParseBearerHeader(c.GetReqHeaders()[internal.AuthenticationHeader])
 		_, hit := operationStorage.Get(internal.Hash2lvl(authToken))
@@ -77,6 +78,7 @@ func (mc *MergeController) Handle(
 			operationFactory,
 			adapterLocator,
 			authToken,
+			loggerFactory,
 		)
 		res := mc.bc.SelectResult(ctxC, cr, start)
 		if res == nil {
@@ -87,7 +89,11 @@ func (mc *MergeController) Handle(
 		}
 
 		if res.GetStr() != "ok" {
-			loggerFactory.ErrorLog(res.GetErr().Error(), "")
+			errorStr := ""
+			if res.GetErr() != nil {
+				errorStr = res.GetErr().Error()
+			}
+			loggerFactory.ErrorLog(errorStr, "")
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"error": res.GetErr().Error(),
 			})
@@ -110,9 +116,13 @@ func (mc *MergeController) realHandler(
 	operationFactory *pdf_operation.OperationsFactory,
 	adapterLocator *locator.Locator,
 	authToken string,
+	loggerFactory *logger.Factory,
 ) {
 	<-start
 
+	defer RestoreController(loggerFactory, "merge controller")
+
+	//time.Sleep(5 * time.Second)
 	secondLevelHash := hash.GenerateNextLevelHashByPrevious(internal.Hash1lvl(authToken), true)
 	pathAdapter := adapterLocator.Locate(adapter.PathAlias).(*adapter.PathAdapter)
 	inDir := pathAdapter.GenerateInDirPath(secondLevelHash)
@@ -127,17 +137,28 @@ func (mc *MergeController) realHandler(
 	err = fileAdapter.CreateDir(string(archiveDir), 0777)
 	defer func() {
 		_ = os.RemoveAll(string(rootDir))
+		cr <- &MergeResponse{
+			str: "panic_context",
+			err: errors.New("handle cancel"),
+		}
 	}()
+	//panic("22222")
 
 	if err != nil {
-		cr <- &MergeResponse{str: "cant_create_dir", err: err}
+		cr <- &MergeResponse{
+			str: "cant_create_dir",
+			err: fmt.Errorf("cant_read_form: %w", err),
+		}
 		return
 	}
 
 	filesOrder := make([]string, 0)
 	form, errRead := c.MultipartForm()
 	if errRead != nil {
-		cr <- &MergeResponse{str: "cant_read_form", err: errRead}
+		cr <- &MergeResponse{
+			str: "cant_read_form",
+			err: fmt.Errorf("cant_read_form: %w", errRead),
+		}
 		return
 	}
 
@@ -147,7 +168,10 @@ func (mc *MergeController) realHandler(
 			_, pathToFile, _ := pathAdapter.StepForward(internal.Path(inDir), nameWithoutSpace)
 			errSave := c.SaveFile(fileHeader, string(pathToFile))
 			if errSave != nil {
-				cr <- &MergeResponse{str: "cant_save_file_from_form", err: errSave}
+				cr <- &MergeResponse{
+					str: "cant_save_file_from_form",
+					err: fmt.Errorf("cant_save_file_from_form: %w", errSave),
+				}
 				return
 			}
 			filesOrder = append(filesOrder, string(pathToFile))
@@ -173,7 +197,10 @@ func (mc *MergeController) realHandler(
 
 	archivePath, errArch := mergePagesOperation.Execute(ctx, adapterLocator, internal.ZipFormat)
 	if errArch != nil {
-		cr <- &MergeResponse{str: "cant_create_archive", err: errArch}
+		cr <- &MergeResponse{
+			str: "cant_create_archive",
+			err: fmt.Errorf("cant_create_archive: %w", errArch),
+		}
 		return
 	}
 

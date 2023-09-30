@@ -41,7 +41,7 @@ func (cc *CancelController) Handle(
 	loggerFactory *logger.Factory,
 ) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
-		defer RestoreController(loggerFactory, c, "cancel controller")
+		defer RestoreController(loggerFactory, "cancel controller")
 
 		authToken := service.ParseBearerHeader(c.GetReqHeaders()[internal.AuthenticationHeader])
 		operationData, hit := operationStorage.Get(internal.Hash2lvl(authToken))

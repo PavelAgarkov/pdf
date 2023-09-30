@@ -3,7 +3,6 @@ package controller
 import (
 	"context"
 	"fmt"
-	"github.com/gofiber/fiber/v2"
 	"pdf/internal/logger"
 )
 
@@ -36,13 +35,9 @@ func (bc *BaseController) SelectResult(
 	}
 }
 
-func RestoreController(loggerFactory *logger.Factory, c *fiber.Ctx, destination string) {
+func RestoreController(loggerFactory *logger.Factory, destination string) {
 	if r := recover(); r != nil {
 		panicStr := fmt.Sprintf(destination+" : Recovered. Panic: %s\n", r)
 		loggerFactory.PanicLog(panicStr, "")
-		err := c.RedirectToRoute("root", map[string]interface{}{})
-		if err != nil {
-			return
-		}
 	}
 }

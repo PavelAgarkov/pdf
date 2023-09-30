@@ -1,12 +1,12 @@
 package route
 
 import (
+	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/favicon"
 	"path/filepath"
 	"pdf/internal"
-	"pdf/internal/controller"
 	"pdf/internal/logger"
 )
 
@@ -33,7 +33,7 @@ func corsMiddleware(app *fiber.App) {
 
 func recoveryHandleRequestMiddleware(app *fiber.App, loggerFactory *logger.Factory) {
 	app.Use(func(c *fiber.Ctx) error {
-		defer controller.RestoreController(loggerFactory, c, "recovery middleware")
+		defer restoreMiddleware(c, loggerFactory)
 		return c.Next()
 	})
 }
@@ -55,4 +55,15 @@ func routs404RedirectMiddleware(app *fiber.App) {
 		}
 		return c.Next()
 	})
+}
+
+func restoreMiddleware(c *fiber.Ctx, loggerFactory *logger.Factory) {
+	if r := recover(); r != nil {
+		panicStr := fmt.Sprintf("recovery middleware"+" : Recovered. Panic: %s\n", r)
+		loggerFactory.PanicLog(panicStr, "")
+		err := c.RedirectToRoute("root", map[string]interface{}{})
+		if err != nil {
+			return
+		}
+	}
 }

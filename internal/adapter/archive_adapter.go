@@ -84,12 +84,12 @@ func (aa *ArchiveAdapter) Archive(
 
 	_, archiveName, err := aa.pathAdapter.StepForward(internal.Path(archiveDir), string(hash2lvl)+compressor.format)
 	if err != nil {
-		return "", fmt.Errorf("can't step forward with path %s: %w", string(archiveDir), err)
+		return "", fmt.Errorf("can't step forward with path : %w", err)
 	}
 
 	out, err := os.Create(string(archiveName))
 	if err != nil {
-		return "", fmt.Errorf("can't create archive file %s: %w", archiveName, err)
+		return "", fmt.Errorf("can't create archive file : %w", err)
 	}
 	defer func(out *os.File) {
 		err := out.Close()
@@ -100,7 +100,7 @@ func (aa *ArchiveAdapter) Archive(
 
 	err = compressor.compressedArchive.Archive(ctx, out, files)
 	if err != nil {
-		return "", fmt.Errorf("can't archivate files %s: %w", archiveName, err)
+		return "", fmt.Errorf("can't archivate files : %w", err)
 	}
 
 	return string(archiveName), nil
