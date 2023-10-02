@@ -24,7 +24,7 @@ func Test_cut(t *testing.T) {
 	)
 	pathAdapter := adapterLocator.Locate(adapter.PathAlias).(*adapter.PathAdapter)
 
-	conf := NewConfiguration(nil, nil, nil)
+	conf := NewConfiguration(nil, nil)
 
 	firstLevelHash := hash.GenerateFirstLevelHash()
 	secondLevelHash := hash.GenerateNextLevelHashByPrevious(firstLevelHash, true)

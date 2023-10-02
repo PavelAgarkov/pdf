@@ -7,7 +7,7 @@ import (
 )
 
 func Test_parseIntervals(t *testing.T) {
-	cnf := NewConfiguration(nil, nil, nil)
+	cnf := NewConfiguration(nil, nil)
 
 	many, intervals := cnf.parseIntervals([]string{"1-22", "55-77"})
 

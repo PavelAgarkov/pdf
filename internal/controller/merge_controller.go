@@ -53,18 +53,18 @@ func (mc *MergeController) Handle(
 		defer RestoreController(loggerFactory, "merge controller")
 
 		authToken := service.ParseBearerHeader(c.GetReqHeaders()[internal.AuthenticationHeader])
-		_, hit := operationStorage.Get(internal.Hash2lvl(authToken))
+		_, hit := operationStorage.Get(hash.GenerateNextLevelHashByPrevious(internal.Hash1lvl(authToken), true))
 		if hit {
-			errMsg := fmt.Sprintf("merge controller: can't process %s from storage", authToken)
+			errMsg := fmt.Sprintf("merge controller: can't process %s already in storage", authToken)
 			loggerFactory.ErrorLog(errMsg, "")
-			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 				"error": errMsg,
 			})
 		}
 
 		authToken = service.GenerateBearerToken()
 
-		ctxC, cancel := context.WithTimeout(ctx, 3*time.Second)
+		ctxC, cancel := context.WithTimeout(ctx, 300*time.Second)
 		defer cancel()
 		cr := make(chan ResponseInterface)
 		start := make(chan struct{})
@@ -122,7 +122,6 @@ func (mc *MergeController) realHandler(
 
 	defer RestoreController(loggerFactory, "merge controller")
 
-	//time.Sleep(5 * time.Second)
 	secondLevelHash := hash.GenerateNextLevelHashByPrevious(internal.Hash1lvl(authToken), true)
 	pathAdapter := adapterLocator.Locate(adapter.PathAlias).(*adapter.PathAdapter)
 	inDir := pathAdapter.GenerateInDirPath(secondLevelHash)
@@ -136,13 +135,13 @@ func (mc *MergeController) realHandler(
 	err = fileAdapter.CreateDir(string(outDir), 0777)
 	err = fileAdapter.CreateDir(string(archiveDir), 0777)
 	defer func() {
-		_ = os.RemoveAll(string(rootDir))
+		_ = os.RemoveAll(string(inDir))
+		_ = os.RemoveAll(string(outDir))
 		cr <- &MergeResponse{
 			str: "panic_context",
 			err: errors.New("handle cancel"),
 		}
 	}()
-	//panic("22222")
 
 	if err != nil {
 		cr <- &MergeResponse{
@@ -152,7 +151,6 @@ func (mc *MergeController) realHandler(
 		return
 	}
 
-	filesOrder := make([]string, 0)
 	form, errRead := c.MultipartForm()
 	if errRead != nil {
 		cr <- &MergeResponse{
@@ -162,6 +160,15 @@ func (mc *MergeController) realHandler(
 		return
 	}
 
+	if len(form.File) == 0 {
+		cr <- &MergeResponse{
+			str: "form_files_empty",
+			err: fmt.Errorf("form_files_empty"),
+		}
+		return
+	}
+
+	// обработка файлов из формы
 	for _, fileHeaders := range form.File {
 		for _, fileHeader := range fileHeaders {
 			nameWithoutSpace := strings.ReplaceAll(fileHeader.Filename, " ", "_")
@@ -174,8 +181,24 @@ func (mc *MergeController) realHandler(
 				}
 				return
 			}
-			filesOrder = append(filesOrder, string(pathToFile))
 		}
+	}
+
+	//получения списка, с порядком файлов указанным пользователем
+	orderFiles, ok := form.Value["orderFiles[]"]
+	if !ok || len(orderFiles) != len(form.File) {
+		cr <- &MergeResponse{
+			str: "form_files_order_absent",
+			err: fmt.Errorf("form_files_order_absent"),
+		}
+		return
+	}
+
+	//переопределение путей до файловой системы
+	for k, v := range orderFiles {
+		nameWithoutSpace := strings.ReplaceAll(v, " ", "_")
+		_, pathToFile, _ := pathAdapter.StepForward(internal.Path(inDir), nameWithoutSpace)
+		orderFiles[k] = string(pathToFile)
 	}
 
 	userData := entity.NewUserData(
@@ -184,9 +207,9 @@ func (mc *MergeController) realHandler(
 		time.Now().Add(internal.Timer5*internal.Minute),
 	)
 	mergePagesOperation := operationFactory.CreateNewOperation(
-		pdf_operation.NewConfiguration(nil, nil, nil),
+		pdf_operation.NewConfiguration(nil, nil),
 		userData,
-		filesOrder,
+		orderFiles,
 		rootDir,
 		inDir,
 		outDir,

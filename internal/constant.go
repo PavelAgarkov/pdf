@@ -9,7 +9,7 @@ const (
 	TarGzFormat  = ".tar.gz"
 
 	AuthenticationHeader = "Authorization"
-	Bearer               = "Bearer__"
+	Bearer               = "Bearer"
 	BearerSeparator      = "__"
 
 	Salt = "1af1dfa857bf1d8814fe1af898 3c18080019922e557f15a8a"

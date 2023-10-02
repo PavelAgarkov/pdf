@@ -34,7 +34,7 @@ func Test_user_in_memory_storage_test(t *testing.T) {
 	firstLevelHash := hash.GenerateFirstLevelHash()
 	secondLevelHash := hash.GenerateNextLevelHashByPrevious(firstLevelHash, true)
 
-	conf := pdf_operation.NewConfiguration(nil, nil, nil)
+	conf := pdf_operation.NewConfiguration(nil, nil)
 	expired := time.Now().Add(internal.Timer5 * internal.Minute)
 
 	inDir := pathAdapter.GenerateInDirPath(secondLevelHash)

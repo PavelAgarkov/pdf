@@ -24,7 +24,7 @@ func Test_split(t *testing.T) {
 	)
 	pathAdapter := adapterLocator.Locate(adapter.PathAlias).(*adapter.PathAdapter)
 
-	conf := NewConfiguration([]string{"1-3", "1-2"}, nil, nil)
+	conf := NewConfiguration([]string{"1-3", "1-2"}, nil)
 	fileAdapter := adapterLocator.Locate(adapter.FileAlias).(*adapter.FileAdapter)
 
 	firstLevelHash := hash.GenerateFirstLevelHash()
