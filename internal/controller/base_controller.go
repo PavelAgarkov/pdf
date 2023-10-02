@@ -7,6 +7,7 @@ import (
 	"mime/multipart"
 	"pdf/internal"
 	"pdf/internal/logger"
+	"slices"
 )
 
 type BaseController struct{}
@@ -55,7 +56,24 @@ func (bc *BaseController) formValidation(form *multipart.Form) error {
 		}
 	}
 
-	if sumSize > internal.MaxSumUploadFilesSizeKb {
+	archiveFormatSlice, ok := form.Value[internal.ArchiveFormatKeyForRequest]
+	archiveFormat := ""
+	if len(archiveFormatSlice) > 0 {
+		archiveFormat = archiveFormatSlice[0]
+	}
+
+	formats := []string{
+		internal.ZipFormat,
+		internal.ZipZstFormat,
+		internal.TarFormat,
+		internal.TarGzFormat,
+	}
+
+	if !ok || !slices.Contains(formats, archiveFormat) {
+		return errors.New("archive format must be selected from the list")
+	}
+
+	if sumSize > internal.MaxSumUploadFilesSizeByte {
 		return errors.New("upload files must be less 100Mb")
 	}
 

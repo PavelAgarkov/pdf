@@ -162,7 +162,6 @@ func (mc *MergeController) realHandler(
 	}
 
 	errForm := mc.formValidation(form)
-
 	if errForm != nil {
 		cr <- &MergeResponse{
 			str: "error_form",
@@ -188,7 +187,7 @@ func (mc *MergeController) realHandler(
 	}
 
 	//получения списка, с порядком файлов указанным пользователем
-	orderFiles, _ := form.Value["orderFiles[]"]
+	orderFiles, _ := form.Value[internal.OrderFilesRequestKey]
 
 	//переопределение путей до файловой системы
 	for k, v := range orderFiles {
@@ -214,7 +213,11 @@ func (mc *MergeController) realHandler(
 		pdf_operation.DestinationMerge,
 	).(*pdf_operation.MergeOperation)
 
-	archivePath, errArch := mergePagesOperation.Execute(ctx, adapterLocator, internal.ZipFormat)
+	archivePath, errArch := mergePagesOperation.Execute(
+		ctx,
+		adapterLocator,
+		form.Value[internal.ArchiveFormatKeyForRequest][0],
+	)
 	if errArch != nil {
 		cr <- &MergeResponse{
 			str: "cant_create_archive",
@@ -237,7 +240,7 @@ func (mc *MergeController) realHandler(
 }
 
 func (mc *MergeController) formValidation(form *multipart.Form) error {
-	if _, ok := form.Value["orderFiles[]"]; !ok {
+	if _, ok := form.Value[internal.OrderFilesRequestKey]; !ok {
 		return errors.New("form must contain the order in which the files will be merged")
 	}
 
@@ -251,7 +254,7 @@ func (mc *MergeController) formValidation(form *multipart.Form) error {
 		break
 	}
 
-	if len(form.Value["orderFiles[]"]) != number {
+	if len(form.Value[internal.OrderFilesRequestKey]) != number {
 		return errors.New("form must be contain merge order for all files")
 	}
 
