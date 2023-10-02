@@ -39,4 +39,7 @@ const (
 	FilesPath      = "./files/"
 	FaviconFile    = "./pdf-frontend/dist/favicon.ico"
 	FrontendAssets = "./pdf-frontend/dist/assets/"
+
+	MaxSumUploadFilesSizeKb = 100000000
+	MaxNumberUploadFiles    = 100
 )

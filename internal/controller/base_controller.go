@@ -2,7 +2,10 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"mime/multipart"
+	"pdf/internal"
 	"pdf/internal/logger"
 )
 
@@ -40,4 +43,25 @@ func RestoreController(loggerFactory *logger.Factory, destination string) {
 		panicStr := fmt.Sprintf(destination+" : Recovered. Panic: %s\n", r)
 		loggerFactory.PanicLog(panicStr, "")
 	}
+}
+
+func (bc *BaseController) formValidation(form *multipart.Form) error {
+	var sumSize int64 = 0
+	countFiles := 0
+	for _, fileHeaders := range form.File {
+		for _, fileHeader := range fileHeaders {
+			sumSize += fileHeader.Size
+			countFiles++
+		}
+	}
+
+	if sumSize > internal.MaxSumUploadFilesSizeKb {
+		return errors.New("upload files must be less 100Mb")
+	}
+
+	if countFiles > internal.MaxNumberUploadFiles {
+		return errors.New("number upload files must be less 100")
+	}
+
+	return nil
 }

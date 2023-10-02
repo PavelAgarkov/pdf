@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
+	"mime/multipart"
 	"os"
 	"pdf/internal"
 	"pdf/internal/adapter"
@@ -160,10 +161,12 @@ func (mc *MergeController) realHandler(
 		return
 	}
 
-	if len(form.File) == 0 {
+	errForm := mc.formValidation(form)
+
+	if errForm != nil {
 		cr <- &MergeResponse{
-			str: "form_files_empty",
-			err: fmt.Errorf("form_files_empty"),
+			str: "error_form",
+			err: errForm,
 		}
 		return
 	}
@@ -185,14 +188,7 @@ func (mc *MergeController) realHandler(
 	}
 
 	//получения списка, с порядком файлов указанным пользователем
-	orderFiles, ok := form.Value["orderFiles[]"]
-	if !ok || len(orderFiles) != len(form.File) {
-		cr <- &MergeResponse{
-			str: "form_files_order_absent",
-			err: fmt.Errorf("form_files_order_absent"),
-		}
-		return
-	}
+	orderFiles, _ := form.Value["orderFiles[]"]
 
 	//переопределение путей до файловой системы
 	for k, v := range orderFiles {
@@ -238,4 +234,31 @@ func (mc *MergeController) realHandler(
 
 	cr <- &MergeResponse{str: "ok", err: nil}
 	return
+}
+
+func (mc *MergeController) formValidation(form *multipart.Form) error {
+	if _, ok := form.Value["orderFiles[]"]; !ok {
+		return errors.New("form must contain the order in which the files will be merged")
+	}
+
+	if len(form.File) == 0 {
+		return errors.New("for merge operation must than 1 pdf file")
+	}
+
+	number := 0
+	for _, fileHeaders := range form.File {
+		number = len(fileHeaders)
+		break
+	}
+
+	if len(form.Value["orderFiles[]"]) != number {
+		return errors.New("form must be contain merge order for all files")
+	}
+
+	err := mc.bc.formValidation(form)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
