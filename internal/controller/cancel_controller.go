@@ -4,11 +4,9 @@ import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"os"
-	"pdf/internal"
 	"pdf/internal/adapter"
 	"pdf/internal/locator"
 	"pdf/internal/logger"
-	"pdf/internal/service"
 	"pdf/internal/storage"
 )
 
@@ -43,35 +41,16 @@ func (cc *CancelController) Handle(
 	return func(c *fiber.Ctx) error {
 		defer RestoreController(loggerFactory, "cancel controller")
 
-		authToken := service.ParseBearerHeader(c.GetReqHeaders()[internal.AuthenticationHeader])
-		operationData, hit := operationStorage.Get(internal.Hash2lvl(authToken))
-		if !hit {
-			errMsg := fmt.Sprintf("cancel controller: can't find hit %s from storage", authToken)
-			loggerFactory.ErrorLog(errMsg, "")
+		operationData, authenticatedErr := cc.bc.isAuthenticated(operationStorage, c, loggerFactory)
+		if authenticatedErr != nil {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"error": errMsg,
-			})
-		}
-
-		ok, err := service.IsAuthenticated(operationData.GetUserData().GetHash2Lvl(), internal.Hash1lvl(authToken))
-		if err != nil {
-			errMsg := fmt.Sprintf("cancel controller: can't delete %s from storage", authToken)
-			loggerFactory.ErrorLog(fmt.Sprintf(errMsg+" %s", err.Error()), "")
-			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"error": errMsg,
-			})
-		}
-		if !ok {
-			errMsg := fmt.Sprintf("cancel controller: can't acces to %s files by hash", authToken)
-			loggerFactory.ErrorLog(errMsg, "")
-			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"error": errMsg,
+				"error": authenticatedErr.Error(),
 			})
 		}
 
 		pathAdapter := adapterLocator.Locate(adapter.PathAlias).(*adapter.PathAdapter)
 		rootDir := pathAdapter.GenerateRootDir(operationData.GetUserData().GetHash2Lvl())
-		err = os.RemoveAll(string(rootDir))
+		err := os.RemoveAll(string(rootDir))
 		if err != nil {
 			errMsg := fmt.Sprintf("cancel controller: can't remove dir %s", rootDir)
 			loggerFactory.ErrorLog(fmt.Sprintf(errMsg+" %s", err.Error()), "")
@@ -83,7 +62,7 @@ func (cc *CancelController) Handle(
 		operationStorage.Delete(operationData.GetUserData().GetHash2Lvl())
 
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{
-			"error": "ok",
+			"error": "no",
 		})
 	}
 }

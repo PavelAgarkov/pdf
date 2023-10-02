@@ -20,6 +20,8 @@ import (
 	"time"
 )
 
+const ChannelResponseOK = "ok"
+
 type MergeController struct {
 	bc *BaseController
 }
@@ -53,17 +55,14 @@ func (mc *MergeController) Handle(
 	return func(c *fiber.Ctx) error {
 		defer RestoreController(loggerFactory, "merge controller")
 
-		authToken := service.ParseBearerHeader(c.GetReqHeaders()[internal.AuthenticationHeader])
-		_, hit := operationStorage.Get(hash.GenerateNextLevelHashByPrevious(internal.Hash1lvl(authToken), true))
-		if hit {
-			errMsg := fmt.Sprintf("merge controller: can't process %s already in storage", authToken)
-			loggerFactory.ErrorLog(errMsg, "")
+		overAuthenticatedErr := mc.bc.isOverAuthenticated(operationStorage, c, loggerFactory)
+		if overAuthenticatedErr != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
-				"error": errMsg,
+				"error": overAuthenticatedErr.Error(),
 			})
 		}
 
-		authToken = service.GenerateBearerToken()
+		authToken := service.GenerateBearerToken()
 
 		ctxC, cancel := context.WithTimeout(ctx, 300*time.Second)
 		defer cancel()
@@ -89,12 +88,8 @@ func (mc *MergeController) Handle(
 			})
 		}
 
-		if res.GetStr() != "ok" {
-			errorStr := ""
-			if res.GetErr() != nil {
-				errorStr = res.GetErr().Error()
-			}
-			loggerFactory.ErrorLog(errorStr, "")
+		if res.GetStr() != ChannelResponseOK {
+			loggerFactory.ErrorLog(res.GetErr().Error(), "")
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"error": res.GetErr().Error(),
 			})
@@ -235,7 +230,7 @@ func (mc *MergeController) realHandler(
 
 	operationStorage.Insert(secondLevelHash, data)
 
-	cr <- &MergeResponse{str: "ok", err: nil}
+	cr <- &MergeResponse{str: ChannelResponseOK, err: nil}
 	return
 }
 

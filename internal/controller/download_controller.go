@@ -1,31 +1,31 @@
 package controller
 
 import (
-	"context"
-	"errors"
-	"fmt"
 	"github.com/gofiber/fiber/v2"
-	"io/fs"
-	"path/filepath"
+	"os"
+	"pdf/internal"
+	"pdf/internal/adapter"
+	"pdf/internal/locator"
 	"pdf/internal/logger"
-	"time"
+	"pdf/internal/pdf_operation"
+	"pdf/internal/storage"
 )
 
 type DownloadController struct {
 	bc *BaseController
 }
 
-type Response struct {
+type DownloadResponse struct {
 	str string
 	err error
 }
 
-func (r *Response) GetStr() string {
-	return r.str
+func (dr *DownloadResponse) GetStr() string {
+	return dr.str
 }
 
-func (r *Response) GetErr() error {
-	return r.err
+func (dr *DownloadResponse) GetErr() error {
+	return dr.err
 }
 
 func NewDownloadController(bc *BaseController) *DownloadController {
@@ -34,73 +34,33 @@ func NewDownloadController(bc *BaseController) *DownloadController {
 	}
 }
 
-func (f *DownloadController) Handle(
-	ctx context.Context,
-	filesPath string,
+func (dc *DownloadController) Handle(
+	operationStorage *storage.OperationStorage,
+	adapterLocator *locator.Locator,
 	loggerFactory *logger.Factory,
 ) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		defer RestoreController(loggerFactory, "download controller")
-		ctxC, cancel := context.WithTimeout(ctx, 10*time.Second)
-		defer cancel()
 
-		cr := make(chan ResponseInterface)
-		start := make(chan struct{})
+		c.Accepts("application/zip")
+		c.Accepts("application/x-bzip")
+		c.Accepts("application/x-tar")
 
-		//fmt.Println(v)
-		filename := filesPath + c.Params("filename")
-		go realHandler(start, cr, filename)
-
-		res := f.bc.SelectResult(ctxC, cr, start)
-
-		// context cancelled
-		if res == nil {
-			return c.RedirectToRoute("root", map[string]interface{}{})
+		operationData, authenticatedErr := dc.bc.isAuthenticated(operationStorage, c, loggerFactory)
+		if authenticatedErr != nil {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": authenticatedErr.Error(),
+			})
 		}
 
-		if res.GetStr() == "redirect" {
-			fmt.Println(res.GetErr().Error())
-			name := filesPath + "ServiceAgreement_template.zip"
-			//return c.RedirectToRoute("root", map[string]interface{}{})
-			c.Accepts("application/pdf")
-			c.Accepts("application/zip")
-			c.Accepts("application/x-bzip")
-			c.Accepts("application/x-tar")
-			//c.Accepts("application/x-7z-compressed")
-			return c.Download(name, "ServiceAgreement_template.zip")
-		}
-		c.Request()
+		archivePath := string(operationData.(*pdf_operation.OperationData).GetArchivePath())
 
-		//if res.GetStr() == "download" {
-		//	return c.Download(filesPath)
-		//}
+		pathAdapter := adapterLocator.Locate(adapter.PathAlias).(*adapter.PathAdapter)
+		_, file, _ := pathAdapter.StepBack(internal.Path(archivePath))
+		rootDir := pathAdapter.GenerateRootDir(operationData.GetUserData().GetHash2Lvl())
 
-		return nil
+		defer os.RemoveAll(string(rootDir))
+		defer operationStorage.Delete(operationData.GetUserData().GetHash2Lvl())
+		return c.Download(archivePath, file)
 	}
-}
-
-func realHandler(start chan struct{}, ch chan ResponseInterface, filename string) {
-	<-start
-
-	err := filepath.WalkDir(
-		filename,
-		func(s string, d fs.DirEntry, err error) error {
-			if err != nil {
-				return err
-			}
-			if d.IsDir() {
-				return errors.New("file must be f")
-			}
-
-			return nil
-		},
-	)
-
-	if err != nil {
-		ch <- &Response{str: "redirect", err: err}
-		return
-	}
-	ch <- &Response{str: "download"}
-
-	return
 }

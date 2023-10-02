@@ -3,8 +3,6 @@ package route
 import (
 	"context"
 	"github.com/gofiber/fiber/v2"
-	"path/filepath"
-	"pdf/internal"
 	"pdf/internal/controller"
 	"pdf/internal/locator"
 	"pdf/internal/logger"
@@ -22,8 +20,8 @@ func Router(
 ) {
 	bc := controller.NewBaseController()
 	app.Get("/download/", controller.NewDownloadController(bc).Handle(
-		ctx,
-		filepath.FromSlash(internal.FilesPath),
+		operationStorage,
+		adapterLocator,
 		loggerFactory,
 	)).Name("download")
 

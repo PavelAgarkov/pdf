@@ -27,8 +27,6 @@ func (pa *PathAdapter) GetAlias() string {
 	return PathAlias
 }
 
-// хранить разрезанные файлы в ./files/Hash2lvl/split/ - так же и генерировать урл на скачивание через Hash2lvl
-
 func (pa *PathAdapter) GenerateDirPathToSplitFiles(hash2lvl internal.Hash2lvl) internal.SplitDir {
 	return internal.SplitDir(filepath.FromSlash(fmt.Sprintf("./files/%s/split/", string(hash2lvl))))
 }
@@ -73,7 +71,7 @@ func (pa *PathAdapter) StepForward(path internal.Path, next string) (internal.Pa
 	last := chunk[len(chunk)-1]
 
 	if strings.Contains(last, ".") {
-		return path, internal.Path(""), errors.New("this path closed for grow")
+		return path, "", errors.New("this path closed for grow")
 	}
 	newPath := filepath.FromSlash(trimStr + "/" + next)
 
