@@ -83,8 +83,14 @@ func (so *SplitOperation) Execute(ctx context.Context, locator *locator.Locator,
 	pageCount, err := api.PageCountFile(inFile)
 	maxValue := slices.Max(many)
 
-	if err != nil || pageCount < maxValue {
-		wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: page coun less interval %w", inFile, err)
+	if err != nil {
+		wrapErr := fmt.Errorf("can't execute operation SPLIT to file: can't page count %w", err)
+		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(wrapErr.Error()))
+		return "", wrapErr
+	}
+
+	if pageCount < maxValue {
+		wrapErr := errors.New("can't execute operation SPLIT to file: page count less interval")
 		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(wrapErr.Error()))
 		return "", wrapErr
 	}

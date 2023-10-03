@@ -38,4 +38,20 @@ func Router(
 		adapterLocator,
 		loggerFactory,
 	)).Name("merge")
+
+	app.Post("/split-page/", controller.NewSplitPageController(bc).Handle(
+		ctx,
+		operationStorage,
+		operationFactory,
+		adapterLocator,
+		loggerFactory,
+	)).Name("split-page")
+
+	app.Post("/remove-page/", controller.NewRemovePageController(bc).Handle(
+		ctx,
+		operationStorage,
+		operationFactory,
+		adapterLocator,
+		loggerFactory,
+	)).Name("remove-page")
 }

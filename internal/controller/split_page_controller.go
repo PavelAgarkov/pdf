@@ -20,32 +20,30 @@ import (
 	"time"
 )
 
-const ChannelResponseOK = "ok"
-
-type MergeController struct {
+type SplitPageController struct {
 	bc *BaseController
 }
 
-type MergeResponse struct {
+type SplitResponse struct {
 	str string
 	err error
 }
 
-func NewMergeController(bc *BaseController) *MergeController {
-	return &MergeController{
+func NewSplitPageController(bc *BaseController) *SplitPageController {
+	return &SplitPageController{
 		bc: bc,
 	}
 }
 
-func (r *MergeResponse) GetStr() string {
+func (r *SplitResponse) GetStr() string {
 	return r.str
 }
 
-func (r *MergeResponse) GetErr() error {
+func (r *SplitResponse) GetErr() error {
 	return r.err
 }
 
-func (mc *MergeController) Handle(
+func (spc *SplitPageController) Handle(
 	ctx context.Context,
 	operationStorage *storage.OperationStorage,
 	operationFactory *pdf_operation.OperationsFactory,
@@ -53,9 +51,9 @@ func (mc *MergeController) Handle(
 	loggerFactory *logger.Factory,
 ) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
-		defer RestoreController(loggerFactory, "merge controller")
+		defer RestoreController(loggerFactory, "split page controller")
 
-		overAuthenticatedErr := mc.bc.isOverAuthenticated(operationStorage, c, loggerFactory)
+		overAuthenticatedErr := spc.bc.isOverAuthenticated(operationStorage, c, loggerFactory)
 		if overAuthenticatedErr != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 				"error": overAuthenticatedErr.Error(),
@@ -64,12 +62,12 @@ func (mc *MergeController) Handle(
 
 		authToken := service.GenerateBearerToken()
 
-		ctxC, cancel := context.WithTimeout(ctx, 3*time.Second)
+		ctxC, cancel := context.WithTimeout(ctx, 300*time.Second)
 		defer cancel()
 		cr := make(chan ResponseInterface)
 		start := make(chan struct{})
 
-		go mc.realHandler(
+		go spc.realHandler(
 			c,
 			ctxC,
 			start,
@@ -80,9 +78,9 @@ func (mc *MergeController) Handle(
 			authToken,
 			loggerFactory,
 		)
-		res := mc.bc.SelectResult(ctxC, cr, start)
+		res := spc.bc.SelectResult(ctxC, cr, start)
 		if res == nil {
-			loggerFactory.PanicLog("merge controller: context expired", "")
+			loggerFactory.PanicLog("split page controller: context expired", "")
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": "merge controller: context expired",
 			})
@@ -103,7 +101,7 @@ func (mc *MergeController) Handle(
 	}
 }
 
-func (mc *MergeController) realHandler(
+func (spc *SplitPageController) realHandler(
 	c *fiber.Ctx,
 	ctx context.Context,
 	start chan struct{},
@@ -124,15 +122,18 @@ func (mc *MergeController) realHandler(
 	rootDir := pathAdapter.GenerateRootDir(secondLevelHash)
 	outDir := pathAdapter.GenerateOutDirPath(secondLevelHash)
 	archiveDir := pathAdapter.GenerateArchiveDirPath(secondLevelHash)
+	splitDir := pathAdapter.GenerateDirPathToSplitFiles(secondLevelHash)
 
 	fileAdapter := adapterLocator.Locate(adapter.FileAlias).(*adapter.FileAdapter)
 	err := fileAdapter.CreateDir(string(rootDir), 0777)
 	err = fileAdapter.CreateDir(string(inDir), 0777)
 	err = fileAdapter.CreateDir(string(outDir), 0777)
 	err = fileAdapter.CreateDir(string(archiveDir), 0777)
+	err = fileAdapter.CreateDir(string(splitDir), 0777)
 	defer func() {
 		_ = os.RemoveAll(string(inDir))
 		_ = os.RemoveAll(string(outDir))
+		_ = os.RemoveAll(string(splitDir))
 		cr <- &MergeResponse{
 			str: "panic_context",
 			err: errors.New("handle cancel"),
@@ -156,7 +157,7 @@ func (mc *MergeController) realHandler(
 		return
 	}
 
-	errForm := mc.formValidation(form)
+	errForm := spc.formValidation(form)
 	if errForm != nil {
 		cr <- &MergeResponse{
 			str: "error_form",
@@ -166,6 +167,7 @@ func (mc *MergeController) realHandler(
 	}
 
 	// обработка файлов из формы
+	files := make([]string, 0)
 	for _, fileHeaders := range form.File {
 		for _, fileHeader := range fileHeaders {
 			nameWithoutSpace := strings.ReplaceAll(fileHeader.Filename, " ", "_")
@@ -178,37 +180,32 @@ func (mc *MergeController) realHandler(
 				}
 				return
 			}
+			files = append(files, string(pathToFile))
 		}
 	}
 
 	//получения списка, с порядком файлов указанным пользователем
-	orderFiles, _ := form.Value[internal.OrderFilesRequestKey]
-
-	//переопределение путей до файловой системы
-	for k, v := range orderFiles {
-		nameWithoutSpace := strings.ReplaceAll(v, " ", "_")
-		_, pathToFile, _ := pathAdapter.StepForward(internal.Path(inDir), nameWithoutSpace)
-		orderFiles[k] = string(pathToFile)
-	}
+	//orderFiles, _ := form.Value[internal.OrderFilesRequestKey]
+	splitPageIntervals := form.Value[internal.SplitPageIntervals]
 
 	userData := entity.NewUserData(
 		internal.Hash1lvl(authToken),
 		secondLevelHash,
 		time.Now().Add(internal.Timer5*internal.Minute),
 	)
-	mergePagesOperation := operationFactory.CreateNewOperation(
-		pdf_operation.NewConfiguration(nil, nil),
+	splitPageOperation := operationFactory.CreateNewOperation(
+		pdf_operation.NewConfiguration(splitPageIntervals, nil),
 		userData,
-		orderFiles,
+		files,
 		rootDir,
 		inDir,
 		outDir,
 		archiveDir,
-		"",
-		pdf_operation.DestinationMerge,
-	).(*pdf_operation.MergeOperation)
+		splitDir,
+		pdf_operation.DestinationSplit,
+	).(*pdf_operation.SplitOperation)
 
-	archivePath, errArch := mergePagesOperation.Execute(
+	archivePath, errArch := splitPageOperation.Execute(
 		ctx,
 		adapterLocator,
 		form.Value[internal.ArchiveFormatKeyForRequest][0],
@@ -224,8 +221,8 @@ func (mc *MergeController) realHandler(
 	data := pdf_operation.NewOperationData(
 		userData,
 		internal.ArchiveDir(archivePath),
-		mergePagesOperation.GetBaseOperation().GetStatus(),
-		mergePagesOperation.GetBaseOperation().GetStoppedReason(),
+		splitPageOperation.GetBaseOperation().GetStatus(),
+		splitPageOperation.GetBaseOperation().GetStoppedReason(),
 	)
 
 	operationStorage.Insert(secondLevelHash, data)
@@ -234,13 +231,9 @@ func (mc *MergeController) realHandler(
 	return
 }
 
-func (mc *MergeController) formValidation(form *multipart.Form) error {
-	if _, ok := form.Value[internal.OrderFilesRequestKey]; !ok {
-		return errors.New("form must contain the order in which the files will be merged")
-	}
-
-	if len(form.File) == 0 {
-		return errors.New("for merge operation must than 1 pdf file")
+func (spc *SplitPageController) formValidation(form *multipart.Form) error {
+	if _, ok := form.Value[internal.SplitPageIntervals]; !ok {
+		return errors.New("form must contain the files split intervals")
 	}
 
 	number := 0
@@ -249,11 +242,27 @@ func (mc *MergeController) formValidation(form *multipart.Form) error {
 		break
 	}
 
-	if len(form.Value[internal.OrderFilesRequestKey]) != number {
-		return errors.New("form must be contain merge order for all files")
+	if number != 1 {
+		return errors.New("for split operation must 1 pdf file")
 	}
 
-	err := mc.bc.formValidation(form)
+	const alpha = "1234567890-"
+	for _, interval := range form.Value[internal.SplitPageIntervals] {
+		for _, char := range interval {
+			if !strings.Contains(alpha, strings.ToLower(string(char))) {
+				return errors.New(fmt.Sprintf("invalid symbol, !%s!", string(char)))
+			}
+		}
+
+		chunks := strings.Split(interval, "-")
+		if len(chunks) > 2 {
+			return errors.New("format must be some '2-5' or 5")
+		}
+	}
+
+	// проверка form.Value[internal.SplitPageIntervals] на правильность ввода
+
+	err := spc.bc.formValidation(form)
 	if err != nil {
 		return err
 	}
