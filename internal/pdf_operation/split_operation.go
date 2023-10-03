@@ -44,9 +44,6 @@ func (so *SplitOperation) GetSplitDir() internal.SplitDir {
 	return so.splitDir
 }
 
-// делать это в контроллере после выполнения операции и вставлять в хранилище эту структуру
-//operationData := NewOperationData(bo.GetUserData(), bo.archiveDir, bo.status, bo.stoppedReason)
-
 func (so *SplitOperation) Execute(ctx context.Context, locator *locator.Locator, format string) (string, error) {
 	defer func() {
 		_ = os.RemoveAll(string(so.GetBaseOperation().GetInDir()))

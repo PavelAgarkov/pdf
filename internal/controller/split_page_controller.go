@@ -80,7 +80,7 @@ func (spc *SplitPageController) Handle(
 		)
 		res := spc.bc.SelectResult(ctxC, cr, start)
 		if res == nil {
-			loggerFactory.PanicLog("split page controller: context expired", "")
+			defer loggerFactory.PanicLog("split page controller: context expired", "")
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": "merge controller: context expired",
 			})
@@ -141,6 +141,7 @@ func (spc *SplitPageController) realHandler(
 	}()
 
 	if err != nil {
+		_ = os.RemoveAll(string(rootDir))
 		cr <- &MergeResponse{
 			str: "cant_create_dir",
 			err: fmt.Errorf("cant_read_form: %w", err),
@@ -150,6 +151,7 @@ func (spc *SplitPageController) realHandler(
 
 	form, errRead := c.MultipartForm()
 	if errRead != nil {
+		_ = os.RemoveAll(string(rootDir))
 		cr <- &MergeResponse{
 			str: "cant_read_form",
 			err: fmt.Errorf("cant_read_form: %w", errRead),
@@ -159,6 +161,7 @@ func (spc *SplitPageController) realHandler(
 
 	errForm := spc.formValidation(form)
 	if errForm != nil {
+		_ = os.RemoveAll(string(rootDir))
 		cr <- &MergeResponse{
 			str: "error_form",
 			err: errForm,
@@ -174,6 +177,7 @@ func (spc *SplitPageController) realHandler(
 			_, pathToFile, _ := pathAdapter.StepForward(internal.Path(inDir), nameWithoutSpace)
 			errSave := c.SaveFile(fileHeader, string(pathToFile))
 			if errSave != nil {
+				_ = os.RemoveAll(string(rootDir))
 				cr <- &MergeResponse{
 					str: "cant_save_file_from_form",
 					err: fmt.Errorf("cant_save_file_from_form: %w", errSave),
@@ -184,8 +188,6 @@ func (spc *SplitPageController) realHandler(
 		}
 	}
 
-	//получения списка, с порядком файлов указанным пользователем
-	//orderFiles, _ := form.Value[internal.OrderFilesRequestKey]
 	splitPageIntervals := form.Value[internal.SplitPageIntervals]
 
 	userData := entity.NewUserData(
@@ -211,6 +213,7 @@ func (spc *SplitPageController) realHandler(
 		form.Value[internal.ArchiveFormatKeyForRequest][0],
 	)
 	if errArch != nil {
+		_ = os.RemoveAll(string(rootDir))
 		cr <- &MergeResponse{
 			str: "cant_create_archive",
 			err: fmt.Errorf("cant_create_archive: %w", errArch),
@@ -259,8 +262,6 @@ func (spc *SplitPageController) formValidation(form *multipart.Form) error {
 			return errors.New("format must be some '2-5' or 5")
 		}
 	}
-
-	// проверка form.Value[internal.SplitPageIntervals] на правильность ввода
 
 	err := spc.bc.formValidation(form)
 	if err != nil {

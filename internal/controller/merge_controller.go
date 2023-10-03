@@ -140,6 +140,7 @@ func (mc *MergeController) realHandler(
 	}()
 
 	if err != nil {
+		_ = os.RemoveAll(string(rootDir))
 		cr <- &MergeResponse{
 			str: "cant_create_dir",
 			err: fmt.Errorf("cant_read_form: %w", err),
@@ -149,6 +150,7 @@ func (mc *MergeController) realHandler(
 
 	form, errRead := c.MultipartForm()
 	if errRead != nil {
+		_ = os.RemoveAll(string(rootDir))
 		cr <- &MergeResponse{
 			str: "cant_read_form",
 			err: fmt.Errorf("cant_read_form: %w", errRead),
@@ -158,6 +160,7 @@ func (mc *MergeController) realHandler(
 
 	errForm := mc.formValidation(form)
 	if errForm != nil {
+		_ = os.RemoveAll(string(rootDir))
 		cr <- &MergeResponse{
 			str: "error_form",
 			err: errForm,
@@ -172,6 +175,7 @@ func (mc *MergeController) realHandler(
 			_, pathToFile, _ := pathAdapter.StepForward(internal.Path(inDir), nameWithoutSpace)
 			errSave := c.SaveFile(fileHeader, string(pathToFile))
 			if errSave != nil {
+				_ = os.RemoveAll(string(rootDir))
 				cr <- &MergeResponse{
 					str: "cant_save_file_from_form",
 					err: fmt.Errorf("cant_save_file_from_form: %w", errSave),
@@ -214,6 +218,7 @@ func (mc *MergeController) realHandler(
 		form.Value[internal.ArchiveFormatKeyForRequest][0],
 	)
 	if errArch != nil {
+		_ = os.RemoveAll(string(rootDir))
 		cr <- &MergeResponse{
 			str: "cant_create_archive",
 			err: fmt.Errorf("cant_create_archive: %w", errArch),
