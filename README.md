@@ -19,6 +19,10 @@ go tool trace trace.out
 
 это для обновления компилированных изменений
 3. docker exec -it node-local sh -----> npm run build
-4. docker exec -it pdf-pdf-1 sh -----> go run main.go
+4. docker exec -it pdf-pdf-1 sh -----> 1.go install, 2.go mod vendor, 3.go mod tidy, 4.go run main.go
+
+
+открыть термилнал Ubuntu в Windows и пересобирать проект этой командой
+docker exec node-local npm run build && docker exec pdf-pdf-1 go build -race -buildvcs=false && docker exec -it pdf-pdf-1 ./pdf
 
 GOOS=windows GOARCH=amd64 go build -buildvcs=false
