@@ -72,6 +72,9 @@ func OrderIntervalValidation(form *multipart.Form, key string) error {
 			if interval[0] > interval[1] {
 				return errors.New("interval format 'n-n' must be written in ascending order")
 			}
+			if interval[0] == 0 || interval[1] == 0 {
+				return errors.New("interval format 'n-n' must be written in ascending order, not zero")
+			}
 		}
 	}
 	return nil
