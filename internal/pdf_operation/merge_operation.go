@@ -77,7 +77,7 @@ func (mo *MergeOperation) Execute(ctx context.Context, locator *locator.Locator,
 	)
 
 	if err != nil {
-		wrapErr := fmt.Errorf("can't execute operation MERGE : can't achivation:  %w", err)
+		wrapErr := fmt.Errorf("can't execute operation MERGE : can't archivation:  %w", err)
 		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(wrapErr.Error()))
 		return "", wrapErr
 	}
