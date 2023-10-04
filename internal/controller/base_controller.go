@@ -57,19 +57,19 @@ func (bc *BaseController) isAuthenticated(
 	authToken := service.ParseBearerHeader(c.GetReqHeaders()[internal.AuthenticationHeader])
 	operationData, hit := operationStorage.Get(hash.GenerateNextLevelHashByPrevious(internal.Hash1lvl(authToken), true))
 	if !hit {
-		errMsg := fmt.Sprintf("can't find hit %s from storage", authToken)
+		errMsg := fmt.Sprintf("can't find hit from storage")
 		loggerFactory.ErrorLog(errMsg, "")
 		return nil, errors.New(errMsg)
 	}
 
 	ok, err := service.IsAuthenticated(operationData.GetUserData().GetHash2Lvl(), internal.Hash1lvl(authToken))
 	if err != nil {
-		errMsg := fmt.Sprintf("can't acces %s to storage", authToken)
+		errMsg := fmt.Sprintf("can't access to storage")
 		loggerFactory.ErrorLog(fmt.Sprintf(errMsg+" %s", err.Error()), "")
 		return nil, errors.New(errMsg)
 	}
 	if !ok {
-		errMsg := fmt.Sprintf("can't acces to %s files by hash", authToken)
+		errMsg := fmt.Sprintf("can't access to files by hash")
 		loggerFactory.ErrorLog(errMsg, "")
 		return nil, errors.New(errMsg)
 	}
@@ -85,7 +85,7 @@ func (bc *BaseController) isOverAuthenticated(
 	authToken := service.ParseBearerHeader(c.GetReqHeaders()[internal.AuthenticationHeader])
 	_, hit := operationStorage.Get(hash.GenerateNextLevelHashByPrevious(internal.Hash1lvl(authToken), true))
 	if hit {
-		errMsg := fmt.Sprintf("can't process %s already in storage", authToken)
+		errMsg := fmt.Sprintf("can't process already in storage")
 		loggerFactory.ErrorLog(errMsg, "")
 		return errors.New(errMsg)
 	}
