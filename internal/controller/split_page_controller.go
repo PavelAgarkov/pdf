@@ -16,6 +16,7 @@ import (
 	"pdf/internal/pdf_operation"
 	"pdf/internal/service"
 	"pdf/internal/storage"
+	"pdf/internal/validation"
 	"strings"
 	"time"
 )
@@ -62,7 +63,7 @@ func (spc *SplitPageController) Handle(
 
 		authToken := service.GenerateBearerToken()
 
-		ctxC, cancel := context.WithTimeout(ctx, 300*time.Second)
+		ctxC, cancel := context.WithTimeout(ctx, 3*time.Second)
 		defer cancel()
 		cr := make(chan ResponseInterface)
 		start := make(chan struct{})
@@ -78,7 +79,7 @@ func (spc *SplitPageController) Handle(
 			authToken,
 			loggerFactory,
 		)
-		res := spc.bc.SelectResult(ctxC, cr, start)
+		res := spc.bc.SelectResponse(ctxC, cr, start)
 		if res == nil {
 			defer loggerFactory.PanicLog("split page controller: context expired", "")
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -239,22 +240,22 @@ func (spc *SplitPageController) formValidation(form *multipart.Form) error {
 		return errors.New("form must contain the files split intervals")
 	}
 
-	err := spc.bc.numberFilesValidation(form, 1)
+	err := validation.NumberFilesValidation(form, 1)
 	if err != nil {
 		return err
 	}
 
-	err = spc.bc.alphaSymbolValidation(form, internal.SplitPageIntervals)
+	err = validation.AlphaSymbolValidation(form, internal.SplitPageIntervals)
 	if err != nil {
 		return err
 	}
 
-	err = spc.bc.orderIntervalValidation(form, internal.SplitPageIntervals)
+	err = validation.OrderIntervalValidation(form, internal.SplitPageIntervals)
 	if err != nil {
 		return err
 	}
 
-	err = spc.bc.formValidation(form)
+	err = validation.FormFileValidation(form)
 	if err != nil {
 		return err
 	}

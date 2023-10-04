@@ -15,26 +15,16 @@ type Operation interface {
 	GetDestination() string
 }
 
-// назначение операции - разделение файла, мерж файлов, сжатие и что придумаем еще
-
-//type Destination string
-//type OperationStatus string
-//type StoppedReason string
-
-// тут записана операция, которую делает пользователь.
-//Это нужно если пользователь решил на пол пути делать новую операцию(например хотел соединить, а потом решил разъединить).
-//Это нужно для отмены его старых данных и удобства работы с ними
-
 type BaseOperation struct {
 	configuration *OperationConfiguration // конфигурации для выполнения операций, например диапазоны разбиения файла
 	ud            *entity.UserData
 	files         sync.Map
-	rootDir       internal.RootDir // путь до директории файла
+	rootDir       internal.RootDir
 	inDir         internal.InDir
 	outDir        internal.OutDir
 	archiveDir    internal.ArchiveDir
 	destination   internal.Destination
-	status        internal.OperationStatus //статус операции нужен для контоля отмены токена и очистки памяти
+	status        internal.OperationStatus
 	stoppedReason internal.StoppedReason
 }
 

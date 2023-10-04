@@ -16,6 +16,7 @@ import (
 	"pdf/internal/pdf_operation"
 	"pdf/internal/service"
 	"pdf/internal/storage"
+	"pdf/internal/validation"
 	"strings"
 	"time"
 )
@@ -80,7 +81,7 @@ func (mc *MergeController) Handle(
 			authToken,
 			loggerFactory,
 		)
-		res := mc.bc.SelectResult(ctxC, cr, start)
+		res := mc.bc.SelectResponse(ctxC, cr, start)
 		// удалять куки с фронтенда на 500 и 404
 		if res == nil {
 			loggerFactory.PanicLog("merge controller: context expired", "")
@@ -259,7 +260,7 @@ func (mc *MergeController) formValidation(form *multipart.Form) error {
 		return errors.New("form must be contain merge order for all files")
 	}
 
-	err := mc.bc.formValidation(form)
+	err := validation.FormFileValidation(form)
 	if err != nil {
 		return err
 	}

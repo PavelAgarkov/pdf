@@ -16,6 +16,7 @@ import (
 	"pdf/internal/pdf_operation"
 	"pdf/internal/service"
 	"pdf/internal/storage"
+	"pdf/internal/validation"
 	"strings"
 	"time"
 )
@@ -62,7 +63,7 @@ func (rpc *RemovePageController) Handle(
 
 		authToken := service.GenerateBearerToken()
 
-		ctxC, cancel := context.WithTimeout(ctx, 300*time.Second)
+		ctxC, cancel := context.WithTimeout(ctx, 3*time.Second)
 		defer cancel()
 		cr := make(chan ResponseInterface)
 		start := make(chan struct{})
@@ -78,7 +79,7 @@ func (rpc *RemovePageController) Handle(
 			authToken,
 			loggerFactory,
 		)
-		res := rpc.bc.SelectResult(ctxC, cr, start)
+		res := rpc.bc.SelectResponse(ctxC, cr, start)
 		if res == nil {
 			loggerFactory.PanicLog("remove page controller: context expired", "")
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -237,22 +238,22 @@ func (rpc *RemovePageController) formValidation(form *multipart.Form) error {
 		return errors.New("form must contain the remove pages intervals")
 	}
 
-	err := rpc.bc.numberFilesValidation(form, 1)
+	err := validation.NumberFilesValidation(form, 1)
 	if err != nil {
 		return err
 	}
 
-	err = rpc.bc.alphaSymbolValidation(form, internal.SplitPageIntervals)
+	err = validation.AlphaSymbolValidation(form, internal.SplitPageIntervals)
 	if err != nil {
 		return err
 	}
 
-	err = rpc.bc.orderIntervalValidation(form, internal.SplitPageIntervals)
+	err = validation.OrderIntervalValidation(form, internal.SplitPageIntervals)
 	if err != nil {
 		return err
 	}
 
-	err = rpc.bc.formValidation(form)
+	err = validation.FormFileValidation(form)
 	if err != nil {
 		return err
 	}
