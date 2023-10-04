@@ -47,11 +47,11 @@ func Router(
 		loggerFactory,
 	)).Name("split-page")
 
-	app.Post("/remove-page/", controller.NewRemovePageController(bc).Handle(
+	app.Post("/remove-pages/", controller.NewRemovePageController(bc).Handle(
 		ctx,
 		operationStorage,
 		operationFactory,
 		adapterLocator,
 		loggerFactory,
-	)).Name("remove-page")
+	)).Name("remove-pages")
 }

@@ -43,7 +43,7 @@ func (cc *CancelController) Handle(
 
 		operationData, authenticatedErr := cc.bc.isAuthenticated(operationStorage, c, loggerFactory)
 		if authenticatedErr != nil {
-			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error": authenticatedErr.Error(),
 			})
 		}

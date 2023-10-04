@@ -239,31 +239,22 @@ func (spc *SplitPageController) formValidation(form *multipart.Form) error {
 		return errors.New("form must contain the files split intervals")
 	}
 
-	number := 0
-	for _, fileHeaders := range form.File {
-		number = len(fileHeaders)
-		break
+	err := spc.bc.numberFilesValidation(form, 1)
+	if err != nil {
+		return err
 	}
 
-	if number != 1 {
-		return errors.New("for split operation must 1 pdf file")
+	err = spc.bc.alphaSymbolValidation(form, internal.SplitPageIntervals)
+	if err != nil {
+		return err
 	}
 
-	const alpha = "1234567890-"
-	for _, interval := range form.Value[internal.SplitPageIntervals] {
-		for _, char := range interval {
-			if !strings.Contains(alpha, strings.ToLower(string(char))) {
-				return errors.New(fmt.Sprintf("invalid symbol, !%s!", string(char)))
-			}
-		}
-
-		chunks := strings.Split(interval, "-")
-		if len(chunks) > 2 {
-			return errors.New("format must be some '2-5' or 5")
-		}
+	err = spc.bc.orderIntervalValidation(form, internal.SplitPageIntervals)
+	if err != nil {
+		return err
 	}
 
-	err := spc.bc.formValidation(form)
+	err = spc.bc.formValidation(form)
 	if err != nil {
 		return err
 	}

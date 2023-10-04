@@ -49,14 +49,14 @@ func (mo *MergeOperation) Execute(ctx context.Context, locator *locator.Locator,
 	err := pdfAdapter.MergeFiles(inFiles, outFile)
 
 	if err != nil {
-		wrapErr := fmt.Errorf("can't execute operation MERGE to files %s: %w", inFiles, err)
+		wrapErr := fmt.Errorf("can't execute operation MERGE to files: %w", err)
 		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(wrapErr.Error()))
 		return "", wrapErr
 	}
 
 	err = pdfAdapter.Optimize(outFile, outFile)
 	if err != nil {
-		wrapErr := fmt.Errorf("can't optimize operation MERGE to file %s: %w", outFile, err)
+		wrapErr := fmt.Errorf("can't optimize operation MERGE to file: %w", err)
 		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(wrapErr.Error()))
 		return "", wrapErr
 	}
@@ -77,7 +77,7 @@ func (mo *MergeOperation) Execute(ctx context.Context, locator *locator.Locator,
 	)
 
 	if err != nil {
-		wrapErr := fmt.Errorf("can't execute operation MERGE : can't achivation %s:  %w", archivePath, err)
+		wrapErr := fmt.Errorf("can't execute operation MERGE : can't achivation:  %w", err)
 		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(wrapErr.Error()))
 		return "", wrapErr
 	}

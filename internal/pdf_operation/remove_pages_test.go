@@ -24,7 +24,7 @@ func Test_remove_pages(t *testing.T) {
 	)
 	pathAdapter := adapterLocator.Locate(adapter.PathAlias).(*adapter.PathAdapter)
 
-	conf := NewConfiguration(nil, []string{"2-11", "13-14"})
+	conf := NewConfiguration(nil, []string{"1", "2-11", "13-14", "1-14"})
 
 	firstLevelHash := hash.GenerateFirstLevelHash()
 	secondLevelHash := hash.GenerateNextLevelHashByPrevious(firstLevelHash, true)

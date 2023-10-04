@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/pdfcpu/pdfcpu/pkg/api"
 	"os"
 	"pdf/internal"
 	"pdf/internal/adapter"
 	"pdf/internal/locator"
+	"slices"
 )
 
 const (
@@ -65,17 +67,35 @@ func (rpo *RemovePagesOperation) Execute(ctx context.Context, locator *locator.L
 
 	outFile := string(bo.GetOutDir()) + string(bo.GetUserData().GetHash1Lvl()) + ".pdf"
 	pdfAdapter := locator.Locate(adapter.PdfAlias).(*adapter.PdfAdapter)
-	err = pdfAdapter.RemovePagesFile(inFile, outFile, removeIntervals)
+
+	many, intIntervals := internal.ParseIntervals(removeIntervals)
+	pageCount, err := api.PageCountFile(inFile)
+	maxValue := slices.Max(many)
 
 	if err != nil {
-		wrapErr := fmt.Errorf("can't execute operation REMOVE_PAGES to file %s: %w", inFile, err)
+		wrapErr := fmt.Errorf("can't execute operation REMOVE_PAGES to file: can't page count %w", err)
+		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(wrapErr.Error()))
+		return "", wrapErr
+	}
+
+	if pageCount < maxValue {
+		wrapErr := errors.New("can't execute operation REMOVE_PAGES to file: page count less interval")
+		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(wrapErr.Error()))
+		return "", wrapErr
+	}
+
+	intervals := internal.ParseIntIntervalsToString(intIntervals)
+	err = pdfAdapter.RemovePagesFile(inFile, outFile, intervals)
+
+	if err != nil {
+		wrapErr := fmt.Errorf("can't execute operation REMOVE_PAGES to file: %w", err)
 		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(wrapErr.Error()))
 		return "", wrapErr
 	}
 
 	err = pdfAdapter.Optimize(outFile, outFile)
 	if err != nil {
-		wrapErr := fmt.Errorf("can't optimize operation REMOVE_PAGES to file %s: %w", inFile, err)
+		wrapErr := fmt.Errorf("can't optimize operation REMOVE_PAGES to file: %w", err)
 		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(wrapErr.Error()))
 		return "", wrapErr
 	}
@@ -95,7 +115,7 @@ func (rpo *RemovePagesOperation) Execute(ctx context.Context, locator *locator.L
 	)
 
 	if err != nil {
-		wrapErr := fmt.Errorf("can't execute operation MERGE : can't achivation %s:  %w", archivePath, err)
+		wrapErr := fmt.Errorf("can't execute operation REMOVE_PAGES : can't archivation:  %w", err)
 		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(wrapErr.Error()))
 		return "", wrapErr
 	}

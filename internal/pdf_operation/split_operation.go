@@ -56,7 +56,7 @@ func (so *SplitOperation) Execute(ctx context.Context, locator *locator.Locator,
 
 	splitIntervals := bo.GetConfiguration().GetSplitIntervals()
 	if splitIntervals == nil {
-		err := errors.New("can't execute operation SPLIT, no intervals: %w")
+		err := errors.New("can't execute operation SPLIT, no intervals")
 		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(err.Error()))
 		return "", err
 	}
@@ -76,7 +76,7 @@ func (so *SplitOperation) Execute(ctx context.Context, locator *locator.Locator,
 
 	inFile := string(bo.GetInDir()) + file
 
-	many, intervals := bo.GetConfiguration().parseIntervals(splitIntervals)
+	many, intervals := internal.ParseIntervals(splitIntervals)
 	pageCount, err := api.PageCountFile(inFile)
 	maxValue := slices.Max(many)
 
@@ -96,7 +96,7 @@ func (so *SplitOperation) Execute(ctx context.Context, locator *locator.Locator,
 	err = pdfAdapter.SplitFile(inFile, string(so.GetSplitDir()))
 
 	if err != nil {
-		wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: %w", inFile, err)
+		wrapErr := fmt.Errorf("can't execute operation SPLIT to file: %w", err)
 		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(wrapErr.Error()))
 		return "", wrapErr
 	}
@@ -105,15 +105,15 @@ func (so *SplitOperation) Execute(ctx context.Context, locator *locator.Locator,
 	splitEntries, err := fileAdapter.GetAllEntriesFromDir(string(so.GetSplitDir()), ".pdf")
 
 	if err != nil {
-		wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: cant read split dir  %w", inFile, err)
+		wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: cant read split dir", err)
 		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(wrapErr.Error()))
 		return "", wrapErr
 	}
 
-	err = so.mergeFiles(pathAdapter, pdfAdapter, splitEntries, intervals, splitIntervals, inFile)
+	err = so.mergeFilesByIntervalsFromEntries(pathAdapter, pdfAdapter, splitEntries, intervals, splitIntervals)
 
 	if err != nil {
-		wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: cant read out dir  %w", inFile, err)
+		wrapErr := fmt.Errorf("can't execute operation SPLIT to file: cant read out dir  %w", err)
 		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(wrapErr.Error()))
 		return "", wrapErr
 	}
@@ -121,7 +121,7 @@ func (so *SplitOperation) Execute(ctx context.Context, locator *locator.Locator,
 	outEntries, err := fileAdapter.GetAllEntriesFromDir(string(bo.GetOutDir()), ".pdf")
 
 	if err != nil {
-		wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: cant read out dir  %w", inFile, err)
+		wrapErr := fmt.Errorf("can't execute operation SPLIT to file: cant read out dir  %w", err)
 		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(wrapErr.Error()))
 		return "", wrapErr
 	}
@@ -138,7 +138,7 @@ func (so *SplitOperation) Execute(ctx context.Context, locator *locator.Locator,
 	)
 
 	if err != nil {
-		wrapErr := fmt.Errorf("can't execute operation SPLIT : can't achivation %s:  %w", archivePath, err)
+		wrapErr := fmt.Errorf("can't execute operation SPLIT : can't achivation:  %w", err)
 		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(wrapErr.Error()))
 		return "", wrapErr
 	}
@@ -147,13 +147,12 @@ func (so *SplitOperation) Execute(ctx context.Context, locator *locator.Locator,
 	return archivePath, nil
 }
 
-func (so *SplitOperation) mergeFiles(
+func (so *SplitOperation) mergeFilesByIntervalsFromEntries(
 	pathAdapter *adapter.PathAdapter,
 	pdfAdapter *adapter.PdfAdapter,
 	splitEntries map[string]string,
 	intervals [][]int,
 	splitIntervals []string,
-	inFile string,
 ) error {
 	bo := so.GetBaseOperation()
 	for k, interval := range intervals {
@@ -165,13 +164,13 @@ func (so *SplitOperation) mergeFiles(
 			cast := strconv.Itoa(index)
 			find, ok := splitEntries[cast]
 			if !ok {
-				wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: can't get from map", inFile)
+				wrapErr := fmt.Errorf("can't execute operation SPLIT to file: can't get from map")
 				return wrapErr
 			}
 
 			_, newPath, err := pathAdapter.StepForward(internal.Path(so.GetSplitDir()), find)
 			if err != nil {
-				wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: can't build filepath  %w", inFile, err)
+				wrapErr := fmt.Errorf("can't execute operation SPLIT to file: can't build filepath  %w", err)
 				return wrapErr
 			}
 
@@ -181,13 +180,13 @@ func (so *SplitOperation) mergeFiles(
 
 		err := pdfAdapter.MergeFiles(forMerge, outFile)
 		if err != nil {
-			wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: can't MERGE  %w", inFile, err)
+			wrapErr := fmt.Errorf("can't execute operation SPLIT to file: can't MERGE  %w", err)
 			return wrapErr
 		}
 
 		err = pdfAdapter.Optimize(outFile, outFile)
 		if err != nil {
-			wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: can't MERGE  %w", inFile, err)
+			wrapErr := fmt.Errorf("can't execute operation SPLIT to file: can't MERGE  %w", err)
 			return wrapErr
 		}
 	}

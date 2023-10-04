@@ -46,4 +46,5 @@ const (
 	ArchiveFormatKeyForRequest = "archive_format"
 	OrderFilesRequestKey       = "order_files[]"
 	SplitPageIntervals         = "split_intervals[]"
+	RemovePagesIntervals       = "remove_pages_intervals[]"
 )
