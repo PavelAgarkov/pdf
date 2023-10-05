@@ -98,9 +98,8 @@ func (mc *MergeController) Handle(
 		}
 
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{
-			"hash":     authToken,
-			"duration": internal.Timer5 * 2,
-			"error":    "no",
+			"hash":  authToken,
+			"error": "no",
 		})
 	}
 }
