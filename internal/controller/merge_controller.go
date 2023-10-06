@@ -82,7 +82,6 @@ func (mc *MergeController) Handle(
 			loggerFactory,
 		)
 		res := mc.bc.SelectResponse(ctxC, cr, start)
-		// удалять куки с фронтенда на 500 и 404
 		if res == nil {
 			loggerFactory.PanicLog("merge controller: context expired", "")
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -99,7 +98,7 @@ func (mc *MergeController) Handle(
 
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{
 			"hash":  authToken,
-			"error": "no",
+			"error": "",
 		})
 	}
 }

@@ -62,7 +62,7 @@ func (cc *CancelController) Handle(
 		operationStorage.Delete(operationData.GetUserData().GetHash2Lvl())
 
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{
-			"error": "no",
+			"error": "",
 		})
 	}
 }

@@ -96,7 +96,7 @@ func (spc *SplitPageController) Handle(
 
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{
 			"hash":  authToken,
-			"error": "no",
+			"error": "",
 		})
 	}
 }

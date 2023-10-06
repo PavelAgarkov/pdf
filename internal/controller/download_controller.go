@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"os"
 	"pdf/internal"
@@ -54,6 +55,13 @@ func (dc *DownloadController) Handle(
 		}
 
 		archivePath := string(operationData.(*pdf_operation.OperationData).GetArchivePath())
+		if archivePath == "" {
+			errMsg := fmt.Sprintf("download controller: can't find archive")
+			loggerFactory.ErrorLog(errMsg, "")
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": errMsg,
+			})
+		}
 
 		pathAdapter := adapterLocator.Locate(adapter.PathAlias).(*adapter.PathAdapter)
 		_, file, _ := pathAdapter.StepBack(internal.Path(archivePath))
