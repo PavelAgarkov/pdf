@@ -54,4 +54,8 @@ func Router(
 		adapterLocator,
 		loggerFactory,
 	)).Name("remove-pages")
+
+	app.Post("/frontend-log-write/", controller.NewFrontendLogController(bc).Handle(
+		loggerFactory,
+	)).Name("frontend-log-write")
 }
