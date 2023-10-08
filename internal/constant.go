@@ -36,7 +36,6 @@ const (
 	FrontendLog = "./log/frontend.log"
 
 	FrontendDist   = "./pdf-frontend/dist"
-	FilesPath      = "./files/"
 	FaviconFile    = "./pdf-frontend/dist/favicon.ico"
 	FrontendAssets = "./pdf-frontend/dist/assets/"
 
