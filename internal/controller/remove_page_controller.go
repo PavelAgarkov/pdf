@@ -242,12 +242,12 @@ func (rpc *RemovePageController) formValidation(form *multipart.Form) error {
 		return err
 	}
 
-	err = validation.AlphaSymbolValidation(form, internal.SplitPageIntervals)
+	err = validation.AlphaSymbolValidation(form, internal.RemovePagesIntervals)
 	if err != nil {
 		return err
 	}
 
-	err = validation.OrderIntervalValidation(form, internal.SplitPageIntervals)
+	err = validation.OrderIntervalValidation(form, internal.RemovePagesIntervals)
 	if err != nil {
 		return err
 	}

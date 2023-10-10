@@ -50,6 +50,7 @@ func FormFileValidation(form *multipart.Form) error {
 
 func AlphaSymbolValidation(form *multipart.Form, key string) error {
 	const alpha = "1234567890-"
+
 	for _, interval := range form.Value[key] {
 		for _, char := range interval {
 			if !strings.Contains(alpha, strings.ToLower(string(char))) {
