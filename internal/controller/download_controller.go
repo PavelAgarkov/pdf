@@ -67,7 +67,12 @@ func (dc *DownloadController) Handle(
 		_, file, _ := pathAdapter.StepBack(internal.Path(archivePath))
 		rootDir := pathAdapter.GenerateRootDir(operationData.GetUserData().GetHash2Lvl())
 
-		defer os.RemoveAll(string(rootDir))
+		defer func(path string) {
+			err := os.RemoveAll(path)
+			if err != nil {
+				loggerFactory.ErrorLog(err.Error(), "")
+			}
+		}(string(rootDir))
 		defer operationStorage.Delete(operationData.GetUserData().GetHash2Lvl())
 		return c.Download(archivePath, file)
 	}
