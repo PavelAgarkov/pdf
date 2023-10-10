@@ -46,4 +46,6 @@ const (
 	OrderFilesRequestKey       = "order_files[]"
 	SplitPageIntervals         = "split_intervals[]"
 	RemovePagesIntervals       = "remove_pages_intervals[]"
+
+	ErrorForm = "error_form"
 )

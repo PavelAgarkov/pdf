@@ -52,25 +52,21 @@ func RestoreController(loggerFactory *logger.Factory, destination string) {
 func (bc *BaseController) isAuthenticated(
 	operationStorage *storage.OperationStorage,
 	c *fiber.Ctx,
-	loggerFactory *logger.Factory,
 ) (pdf_operation.OperationDataInterface, error) {
 	authToken := service.ParseBearerHeader(c.GetReqHeaders()[internal.AuthenticationHeader])
 	operationData, hit := operationStorage.Get(hash.GenerateNextLevelHashByPrevious(internal.Hash1lvl(authToken), true))
 	if !hit {
 		errMsg := fmt.Sprintf("can't find hit from storage")
-		loggerFactory.ErrorLog(errMsg, "")
 		return nil, errors.New(errMsg)
 	}
 
 	ok, err := service.IsAuthenticated(operationData.GetUserData().GetHash2Lvl(), internal.Hash1lvl(authToken))
 	if err != nil {
 		errMsg := fmt.Sprintf("can't access to storage")
-		loggerFactory.ErrorLog(fmt.Sprintf(errMsg+" %s", err.Error()), "")
 		return nil, errors.New(errMsg)
 	}
 	if !ok {
 		errMsg := fmt.Sprintf("can't access to files by hash")
-		loggerFactory.ErrorLog(errMsg, "")
 		return nil, errors.New(errMsg)
 	}
 

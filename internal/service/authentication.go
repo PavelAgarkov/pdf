@@ -12,13 +12,13 @@ func IsAuthenticated(
 	requestHash internal.Hash1lvl,
 ) (bool, error) {
 	if requestHash == "" {
-		return false, errors.New("")
+		return false, errors.New("request hash empty")
 	}
 
 	hashFromRequest := hash.GenerateNextLevelHashByPrevious(requestHash, true)
 
 	if storageHash != hashFromRequest {
-		return false, errors.New("")
+		return false, errors.New("can't access")
 	}
 
 	return true, nil

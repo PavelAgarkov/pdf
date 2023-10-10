@@ -41,7 +41,7 @@ func (cc *CancelController) Handle(
 	return func(c *fiber.Ctx) error {
 		defer RestoreController(loggerFactory, "cancel controller")
 
-		operationData, authenticatedErr := cc.bc.isAuthenticated(operationStorage, c, loggerFactory)
+		operationData, authenticatedErr := cc.bc.isAuthenticated(operationStorage, c)
 		if authenticatedErr != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error": authenticatedErr.Error(),

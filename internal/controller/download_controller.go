@@ -47,7 +47,7 @@ func (dc *DownloadController) Handle(
 		c.Accepts("application/x-bzip")
 		c.Accepts("application/x-tar")
 
-		operationData, authenticatedErr := dc.bc.isAuthenticated(operationStorage, c, loggerFactory)
+		operationData, authenticatedErr := dc.bc.isAuthenticated(operationStorage, c)
 		if authenticatedErr != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error": authenticatedErr.Error(),

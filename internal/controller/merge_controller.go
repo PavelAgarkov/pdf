@@ -89,6 +89,12 @@ func (mc *MergeController) Handle(
 			})
 		}
 
+		if res.GetStr() == internal.ErrorForm {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": res.GetErr().Error(),
+			})
+		}
+
 		if res.GetStr() != ChannelResponseOK {
 			loggerFactory.ErrorLog(res.GetErr().Error(), "")
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
@@ -162,7 +168,7 @@ func (mc *MergeController) realHandler(
 	if errForm != nil {
 		_ = os.RemoveAll(string(rootDir))
 		cr <- &MergeResponse{
-			str: "error_form",
+			str: internal.ErrorForm,
 			err: errForm,
 		}
 		return
