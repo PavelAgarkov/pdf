@@ -1,0 +1,51 @@
+version: "3.9"
+services:
+  #  node:
+  #    container_name: 'node-local'
+  #    stdin_open: true
+  #    tty: true
+  #    image: node:18
+  #    working_dir: /www/pdf/pdf-frontend
+  #    user: node
+  #    volumes:
+  #      - ..:/www
+  #    ports:
+  #      - "9499:9499"
+  #    networks:
+  #      - node-net
+
+  #  - ./proxy/nginx/log:/var/log/nginx
+  #  - ..:/var/www
+
+  proxy:
+    restart: always
+    image: jwilder/nginx-proxy
+    volumes:
+      - ./proxy/hosts:/etc/hosts
+      - /var/run/docker.sock:/tmp/docker.sock
+      - ./proxy/my_nginx.conf:/etc/nginx/conf.d/my_nginx.conf
+    ports:
+      - "80:81"
+#      - "4000:4000"
+    networks:
+      - pdf-net
+    depends_on:
+      - backend
+
+  backend:
+    restart: always
+    build: .
+    volumes:
+      - ..:/www/src
+    command: ./pdf
+    working_dir: /www/src/pdf
+#    ports:
+#      - "3000:3000"
+    networks:
+      - pdf-net
+
+networks:
+  pdf-net:
+    driver: bridge
+  node-net:
+    driver: bridge

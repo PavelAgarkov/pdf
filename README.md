@@ -14,6 +14,10 @@ go tool trace trace.out
 
 Запуск проекта из директории бэкенда.
 
+sudo /etc/init.d/apache2 stop
+sudo netstat -tulpn | grep LISTEN
+
+
 1. docker compose build
 2. docker compose up
 
