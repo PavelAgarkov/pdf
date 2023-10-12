@@ -59,8 +59,10 @@ backend_build() {
 }
 
 frontend_build() {
+  docker-compose -f /var/www/pdf/docker-compose-prode.yaml start node &&
    docker exec node-local npm install &&
-  docker exec node-local npm run build
+  docker exec node-local npm run build &&
+  docker-compose -f /var/www/pdf/docker-compose-prode.yaml stop node
 }
 
 go_install() {
@@ -87,8 +89,9 @@ apache2_stop() {
 start_service() {
  stop_service &&
   docker-compose -f /var/www/pdf/docker-compose-prode.yaml build &&
-  backend_build &&
-  docker-compose -f /var/www/pdf/docker-compose-prode.yaml up -d
+  frontend_build && backend_build &&
+  docker-compose -f /var/www/pdf/docker-compose-prode.yaml up -d &&
+  docker-compose -f /var/www/pdf/docker-compose-prode.yaml stop node
 }
 
 stop_service() {
