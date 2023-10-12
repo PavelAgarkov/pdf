@@ -87,6 +87,7 @@ apache2_stop() {
 start_service() {
  stop_service &&
   docker-compose -f /var/www/pdf/docker-compose-prode.yaml build &&
+  backend_build &&
   docker-compose -f /var/www/pdf/docker-compose-prode.yaml up -d
 }
 
