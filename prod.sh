@@ -35,10 +35,10 @@ ssh_gen() {
 git_update() {
   cd /var/www/pdf &&
   git pull &&
-  echo "backend pull complete\n" &&
+  echo "backend pull complete" &&
   cd /var/www/pdf/pdf-frontend/ &&
   git pull &&
-  echo "frontend pull complete\n"
+  echo "frontend pull complete"
 }
 
 build_project() {
@@ -50,7 +50,7 @@ backend_build() {
        go build &&
        go mod vendor &&
        go mod tidy &&
-       echo "backend build complete\n"
+       echo "backend build complete"
 }
 
 frontend_build() {
@@ -58,7 +58,7 @@ frontend_build() {
    docker exec node-local npm install &&
   docker exec node-local npm run build &&
   docker-compose -f /var/www/pdf/docker-compose-prode.yaml stop node &&
-  echo "frontend build complete\n"
+  echo "frontend build complete"
 }
 
 go_install() {
@@ -80,7 +80,7 @@ git_install() {
 apache2_stop() {
     /etc/init.d/apache2 stop &&
     update-rc.d apache2 disable &&
-    echo "apache2 stopped complete\n"
+    echo "apache2 stopped complete"
 }
 
 start_service() {
@@ -90,13 +90,13 @@ start_service() {
   docker-compose -f /var/www/pdf/docker-compose-prode.yaml build &&
   build_project &&
   docker-compose -f /var/www/pdf/docker-compose-prode.yaml up -d &&
-  echo "service start on port 80\n" &&
+  echo "service start on port 80" &&
   docker-compose -f /var/www/pdf/docker-compose-prode.yaml stop node
 }
 
 stop_service() {
   docker-compose -f /var/www/pdf/docker-compose-prode.yaml stop &&
-  echo "service stopped complete\n"
+  echo "service stopped complete"
 }
 
 docker_install() {
