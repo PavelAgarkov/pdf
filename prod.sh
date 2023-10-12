@@ -13,6 +13,7 @@ command() {
     echo "apache2_stop - останавливает апач2 и выводит из автозагрузки, чтобы не подавлял nginx в контейнере" &&
     echo "start_service - запускает сервис со всеми обновления и пересборками" &&
     echo "stop_service - останавливает все контенеры" &&
+    echo "fast_update_service - быстрый способ обновить сервис, если он уже работал" &&
     echo "docker_install - устанавливает docker и docker-compose"
 }
 
