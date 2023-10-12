@@ -47,5 +47,6 @@ const (
 	SplitPageIntervals         = "split_intervals[]"
 	RemovePagesIntervals       = "remove_pages_intervals[]"
 
-	ErrorForm = "error_form"
+	ErrorForm      = "error_form"
+	OperationError = "operation_error"
 )

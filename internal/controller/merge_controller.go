@@ -95,6 +95,13 @@ func (mc *MergeController) Handle(
 			})
 		}
 
+		if res.GetStr() == internal.OperationError {
+			loggerFactory.ErrorLog(res.GetErr().Error(), "")
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "operation_version_is_not_suitable",
+			})
+		}
+
 		if res.GetStr() != ChannelResponseOK {
 			loggerFactory.ErrorLog(res.GetErr().Error(), "")
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
@@ -218,16 +225,16 @@ func (mc *MergeController) realHandler(
 		pdf_operation.DestinationMerge,
 	).(*pdf_operation.MergeOperation)
 
-	archivePath, errArch := mergePagesOperation.Execute(
+	archivePath, operationErr := mergePagesOperation.Execute(
 		ctx,
 		adapterLocator,
 		form.Value[internal.ArchiveFormatKeyForRequest][0],
 	)
-	if errArch != nil {
+	if operationErr != nil {
 		_ = os.RemoveAll(string(rootDir))
 		cr <- &MergeResponse{
-			str: "cant_create_archive",
-			err: fmt.Errorf("cant_create_archive: %w", errArch),
+			str: internal.OperationError,
+			err: fmt.Errorf("can't make opearation: %w", operationErr),
 		}
 		return
 	}

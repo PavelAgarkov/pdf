@@ -11,7 +11,7 @@ using() {
 go_build() {
   go mod tidy &&
   go mod vendor &&
-  go build
+  go build .
 }
 
 nwm_switch_to_18() {

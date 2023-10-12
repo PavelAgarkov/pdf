@@ -23,7 +23,6 @@ services:
       - ./proxy/my_nginx.conf:/etc/nginx/conf.d/my_nginx.conf
     ports:
       - "80:81"
-    #      - "4000:4000"
     networks:
       - pdf-net
     depends_on:
@@ -36,8 +35,6 @@ services:
       - ..:/www/src
     command: ./pdf
     working_dir: /www/src/pdf
-    #    ports:
-    #      - "3000:3000"
     networks:
       - pdf-net
 
