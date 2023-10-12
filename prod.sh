@@ -43,7 +43,7 @@ git_init() {
 git_update() {
   cd /var/www/pdf &&
   git pull &&
-  cd /pdf-frontend/ &&
+  cd /var/www/pdf/pdf-frontend/ &&
   git pull
 }
 
