@@ -17,9 +17,12 @@ command() {
     echo "docker_install - устанавливает docker и docker-compose"
 }
 
+#docker exec -it pdf_proxy_1 bash
 #sudo apt update
+#apt-get install snap
 #sudo apt install snapd
 #sudo nginx -t
+#snap install --classic certbot
 
 git_init() {
   apt install git &&
