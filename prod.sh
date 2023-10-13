@@ -17,6 +17,10 @@ command() {
     echo "docker_install - устанавливает docker и docker-compose"
 }
 
+#sudo apt update
+#sudo apt install snapd
+#sudo nginx -t
+
 git_init() {
   apt install git &&
   cd /var/www/ &&
