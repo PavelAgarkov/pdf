@@ -19,10 +19,14 @@ command() {
 
 #docker exec -it pdf_proxy_1 bash
 #sudo apt update
-#apt-get install snap
-#sudo apt install snapd
 #sudo nginx -t
-#snap install --classic certbot
+
+
+
+#apt-get install ufw
+#ufw enable
+#ufw status numbered
+#ufw allow https
 
 git_init() {
   apt install git &&
@@ -37,7 +41,12 @@ ssh_gen() {
   cd ~/.ssh &&
   ssh-keygen -t rsa &&
    eval "$(ssh-agent -s)"
-#   ssh-add ~/.ssh/id_ed25519
+   ssh-add ~/.ssh/pdf
+}
+
+ssh_update() {
+     eval "$(ssh-agent -s)"
+     ssh-add ~/.ssh/pdf
 }
 
 git_update() {

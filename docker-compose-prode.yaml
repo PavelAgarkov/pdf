@@ -24,6 +24,7 @@ services:
       - ./proxy/my_nginx.conf:/etc/nginx/conf.d/my_nginx.conf
     ports:
       - "80:81"
+      - "443:444"
     networks:
       - pdf-net
     depends_on:
