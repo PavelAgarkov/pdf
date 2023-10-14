@@ -40,12 +40,14 @@ ufw_init() {
 }
 
 git_init() {
-  apt install git &&
+  git_install &&
   cd /var/www/ &&
   git clone git@github.com:PavelAgarkov/pdf.git &&
   cd pdf/ &&
   git clone git@github.com:PavelAgarkov/pdf-frontend.git &&
-  chmod 666 /var/www/pdf/pdf-frontend
+  chmod 667 /var/www/pdf/pdf-frontend &&
+  chmod 666 /var/www/pdf/pdf-frontend/package-lock.json &&
+  chmod 666 /var/www/pdf/pdf-frontend/package.json
 }
 
 ssh_gen() {
@@ -83,11 +85,7 @@ backend_build() {
 
 frontend_build() {
   docker-compose -f /var/www/pdf/docker-compose-prode.yaml start node &&
-  chmod 666 /var/www/pdf/pdf-frontend &&
-  chmod 666 /var/www/pdf/pdf-frontend/package-lock.json &&
-  chmod 666 /var/www/pdf/pdf-frontend/package.json &&
-
-   docker exec node-local npm install &&
+  docker exec node-local npm install &&
   docker exec node-local npm run build &&
   docker-compose -f /var/www/pdf/docker-compose-prode.yaml stop node &&
   echo "frontend build complete"
