@@ -109,7 +109,7 @@ git_install() {
 }
 
 apache2_stop() {
-  /etc/init.d/nginx restart &&
+  /etc/init.d/nginx stop &&
   update-rc.d nginx disable &&
     /etc/init.d/apache2 stop &&
     update-rc.d apache2 disable &&
