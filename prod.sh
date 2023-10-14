@@ -15,39 +15,13 @@ command() {
     echo "stop_service - останавливает все контенеры" &&
     echo "fast_update_service - быстрый способ обновить сервис, если он уже работал" &&
     echo "docker_install - устанавливает docker и docker-compose"
+    echo "ufw_init - запускает сетевой экран и устанавливает открытые порты"
+    echo "monitor_ports - посмотреть открытые порт и сетевой экран"
 }
 
-#docker exec -it pdf_proxy_1 bash
-#sudo apt update
-#sudo nginx -t
-
-#nmap -4 -Pn 176.119.159.215
-#ufw status numbered
-
-
-#apt-get install ufw
-#ufw enable
-#ufw allow https
-
-ufw_init() {
-  apt install nmap &&
-  apt-get install ufw &&
-  ufw enable &&
-  ufw allow https &&
-  ufw allow http &&
-  ufw allow ssh &&
+monitor_ports() {
+  nmap -4 -Pn 176.119.159.215 &&
   ufw status numbered
-}
-
-git_init() {
-  git_install &&
-  cd /var/www/ &&
-  git clone git@github.com:PavelAgarkov/pdf.git &&
-  cd pdf/ &&
-  git clone git@github.com:PavelAgarkov/pdf-frontend.git &&
-  chmod 667 /var/www/pdf/pdf-frontend &&
-  chmod 666 /var/www/pdf/pdf-frontend/package-lock.json &&
-  chmod 666 /var/www/pdf/pdf-frontend/package.json
 }
 
 ssh_gen() {
@@ -89,18 +63,6 @@ frontend_build() {
   docker exec node-local npm run build &&
   docker-compose -f /var/www/pdf/docker-compose-prode.yaml stop node &&
   echo "frontend build complete"
-}
-
-go_install() {
-    apt install curl &&
-    cd /home &&
-    curl -OL https://golang.org/dl/go1.21.3.linux-amd64.tar.gz &&
-    tar -C /usr/local -xvf go1.21.3.linux-amd64.tar.gz &&
-    cd /usr/local/go &&
-    echo "export PATH=$PATH:/usr/local/go/bin" >> ~/.profile &&
-    cd /var/www/pdf &&
-    source ~/.profile &&
-    backend_build
 }
 
 git_install() {
@@ -145,6 +107,39 @@ docker_install() {
     apt install docker.io &&
     apt install docker-compose &&
     apt install net-tools
+}
+
+git_init() {
+  git_install &&
+  cd /var/www/ &&
+  git clone git@github.com:PavelAgarkov/pdf.git &&
+  cd pdf/ &&
+  git clone git@github.com:PavelAgarkov/pdf-frontend.git &&
+  chmod 667 /var/www/pdf/pdf-frontend &&
+  chmod 666 /var/www/pdf/pdf-frontend/package-lock.json &&
+  chmod 666 /var/www/pdf/pdf-frontend/package.json
+}
+
+ufw_init() {
+  apt install nmap &&
+  apt-get install ufw &&
+  ufw enable &&
+  ufw allow https &&
+  ufw allow http &&
+  ufw allow ssh &&
+  ufw status numbered
+}
+
+go_install() {
+    apt install curl &&
+    cd /home &&
+    curl -OL https://golang.org/dl/go1.21.3.linux-amd64.tar.gz &&
+    tar -C /usr/local -xvf go1.21.3.linux-amd64.tar.gz &&
+    cd /usr/local/go &&
+    echo "export PATH=$PATH:/usr/local/go/bin" >> ~/.profile &&
+    cd /var/www/pdf &&
+    source ~/.profile &&
+    backend_build
 }
 
 if declare -f "$1" > /dev/null
