@@ -121,9 +121,7 @@ start_service() {
   git_update &&
   stop_service &&
   docker-compose -f /var/www/pdf/docker-compose-prode.yaml build &&
-  docker-compose -f /var/www/pdf/docker-compose-prode.yaml up &&
   build_project &&
-  docker-compose -f /var/www/pdf/docker-compose-prode.yaml stop &&
   docker-compose -f /var/www/pdf/docker-compose-prode.yaml up -d &&
   echo "service start on port 80" &&
   docker-compose -f /var/www/pdf/docker-compose-prode.yaml stop node
