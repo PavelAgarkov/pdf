@@ -21,12 +21,23 @@ command() {
 #sudo apt update
 #sudo nginx -t
 
+#nmap -4 -Pn 176.119.159.215
+#ufw status numbered
 
 
 #apt-get install ufw
 #ufw enable
-#ufw status numbered
 #ufw allow https
+
+ufw_init() {
+  apt install nmap &&
+  apt-get install ufw &&
+  ufw enable &&
+  ufw allow https &&
+  ufw allow http &&
+  ufw allow ssh &&
+  ufw status numbered
+}
 
 git_init() {
   apt install git &&
@@ -38,10 +49,10 @@ git_init() {
 }
 
 ssh_gen() {
-  cd ~/.ssh &&
-  ssh-keygen -t rsa &&
-   eval "$(ssh-agent -s)"
-   ssh-add ~/.ssh/pdf
+  cd ~/ &&
+  mkdir  ~/.ssh && cd ~/.ssh &&
+  ssh-keygen -t ed25519 -C "agarkov.ru@mail.ru" &&
+   eval "$(ssh-agent -s)" && ssh-add ~/.ssh/pdf
 }
 
 ssh_update() {
@@ -72,6 +83,10 @@ backend_build() {
 
 frontend_build() {
   docker-compose -f /var/www/pdf/docker-compose-prode.yaml start node &&
+  chmod 666 /var/www/pdf/pdf-frontend &&
+  chmod 666 /var/www/pdf/pdf-frontend/package-lock.json &&
+  chmod 666 /var/www/pdf/pdf-frontend/package.json &&
+
    docker exec node-local npm install &&
   docker exec node-local npm run build &&
   docker-compose -f /var/www/pdf/docker-compose-prode.yaml stop node &&
@@ -79,10 +94,11 @@ frontend_build() {
 }
 
 go_install() {
+    apt install curl &&
     cd /home &&
     curl -OL https://golang.org/dl/go1.21.3.linux-amd64.tar.gz &&
-    cd /usr/local/go &&
     tar -C /usr/local -xvf go1.21.3.linux-amd64.tar.gz &&
+    cd /usr/local/go &&
     echo "export PATH=$PATH:/usr/local/go/bin" >> ~/.profile &&
     cd /var/www/pdf &&
     source ~/.profile &&
@@ -95,6 +111,8 @@ git_install() {
 }
 
 apache2_stop() {
+  /etc/init.d/nginx restart &&
+  update-rc.d nginx disable &&
     /etc/init.d/apache2 stop &&
     update-rc.d apache2 disable &&
     echo "apache2 stopped complete"
@@ -105,7 +123,9 @@ start_service() {
   git_update &&
   stop_service &&
   docker-compose -f /var/www/pdf/docker-compose-prode.yaml build &&
+  docker-compose -f /var/www/pdf/docker-compose-prode.yaml up &&
   build_project &&
+  docker-compose -f /var/www/pdf/docker-compose-prode.yaml stop &&
   docker-compose -f /var/www/pdf/docker-compose-prode.yaml up -d &&
   echo "service start on port 80" &&
   docker-compose -f /var/www/pdf/docker-compose-prode.yaml stop node
