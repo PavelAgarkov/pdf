@@ -32,7 +32,7 @@ ssh_gen() {
 }
 
 ssh_update() {
-     eval "$(ssh-agent -s)"
+     cd /var/www/pdf && eval "$(ssh-agent -s)" &&
      ssh-add ~/.ssh/pdf
 }
 
