@@ -10,7 +10,7 @@ services:
     volumes:
       - ..:/www
     ports:
-      - "9499:9499"
+      - "127.0.0.1:9499:9499"
     networks:
       - node-net
 

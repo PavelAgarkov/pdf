@@ -45,6 +45,11 @@ generate_ssl() {
 
 }
 
+regenerate_ssl() {
+      certbot --nginx -d pdf-lifeguard.com -d www.pdf-lifeguard.com &&
+      nginx -t && systemctl restart nginx
+}
+
 monitor_ports() {
   nmap -4 -Pn 176.119.159.215 &&
   ufw status numbered &&
@@ -59,8 +64,7 @@ ssh_gen() {
 }
 
 ssh_update() {
-     cd /var/www/pdf && eval "$(ssh-agent -s)" &&
-     ssh-add ~/.ssh/pdf
+     cd /var/www/pdf && eval "$(ssh-agent -s)" && ssh-add ~/.ssh/pdf
 }
 
 git_update() {
