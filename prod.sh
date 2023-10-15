@@ -119,9 +119,9 @@ start_service() {
   nginx_enable &&
   git_update &&
   stop_service &&
-  docker-compose -f /var/www/pdf/docker-compose-prode.yaml build &&
+  docker-compose -f /var/www/pdf/docker-compose-prode.yaml build --remove-orphans &&
   build_project &&
-  docker-compose -f /var/www/pdf/docker-compose-prode.yaml up -d &&
+  docker-compose -f /var/www/pdf/docker-compose-prode.yaml up -d --remove-orphans &&
   echo "service start on port 443" &&
   docker-compose -f /var/www/pdf/docker-compose-prode.yaml stop node
 }
