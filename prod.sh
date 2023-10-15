@@ -19,6 +19,8 @@ command() {
     echo "monitor_ports - посмотреть открытые порт и сетевой экран"
 }
 
+#176.119.159.215 pdf-lifeguard.com www.pdf-lifeguard.com
+
 generate_ssl() {
     apt install nginx &&
     /etc/init.d/nginx start &&
