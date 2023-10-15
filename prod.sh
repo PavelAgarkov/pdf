@@ -20,6 +20,7 @@ command() {
 }
 
 generate_ssl() {
+    apt install nginx &&
     /etc/init.d/nginx start &&
     update-rc.d nginx enable &&
     apt-get install certbot &&
@@ -27,8 +28,8 @@ generate_ssl() {
     cd /etc/nginx/sites-available/ &&
     touch pdf-lifeguard.conf &&
     echo "server {
-              listen 81;
-              root /var/www/pdf;
+              listen 80;
+
               client_max_body_size 100M;
               server_tokens off;
 
@@ -38,13 +39,16 @@ generate_ssl() {
                   proxy_pass http://localhost:3000/;
               }
           }" >> /etc/nginx/sites-available/pdf-lifeguard.conf &&
-          nginx -t && nginx -s reload
+    ln -s /etc/nginx/sites-available/pdf-lifeguard.conf /etc/nginx/sites-enabled/ &&
+    certbot --nginx -d pdf-lifeguard.com -d www.pdf-lifeguard.com &&
+    nginx -t && systemctl restart nginx
 
 }
 
 monitor_ports() {
   nmap -4 -Pn 176.119.159.215 &&
-  ufw status numbered
+  ufw status numbered &&
+  netstat -tulpn | grep LISTEN
 }
 
 ssh_gen() {
@@ -149,6 +153,7 @@ ufw_init() {
   ufw allow https &&
   ufw allow http &&
   ufw allow ssh &&
+  ufw allow 'Nginx Full' &&
   ufw status numbered
 }
 

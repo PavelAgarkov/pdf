@@ -38,7 +38,7 @@ services:
     command: ./pdf
     working_dir: /www/src/pdf
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     networks:
       - pdf-net
 
