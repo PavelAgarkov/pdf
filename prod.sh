@@ -22,9 +22,9 @@ command() {
 #176.119.159.215 pdf-lifeguard.com www.pdf-lifeguard.com
 
 generate_ssl() {
+    apache2_stop &&
     apt install nginx &&
-    /etc/init.d/nginx start &&
-    update-rc.d nginx enable &&
+    nginx_enable &&
     apt-get install certbot &&
     apt-get install python3-certbot-nginx &&
     cd /etc/nginx/sites-available/ &&
@@ -44,12 +44,12 @@ generate_ssl() {
     ln -s /etc/nginx/sites-available/pdf-lifeguard.conf /etc/nginx/sites-enabled/ &&
     certbot --nginx -d pdf-lifeguard.com -d www.pdf-lifeguard.com &&
     nginx -t && systemctl restart nginx
-
 }
 
 regenerate_ssl() {
-      certbot --nginx -d pdf-lifeguard.com -d www.pdf-lifeguard.com &&
-      nginx -t && systemctl restart nginx
+    certbot --nginx -d pdf-lifeguard.com -d www.pdf-lifeguard.com &&
+    nginx -t &&
+    systemctl restart nginx
 }
 
 monitor_ports() {
@@ -62,7 +62,7 @@ ssh_gen() {
   cd ~/ &&
   mkdir  ~/.ssh && cd ~/.ssh &&
   ssh-keygen -t ed25519 -C "agarkov.ru@mail.ru" &&
-   eval "$(ssh-agent -s)" && ssh-add ~/.ssh/pdf
+  eval "$(ssh-agent -s)" && ssh-add ~/.ssh/pdf
 }
 
 ssh_update() {
@@ -84,10 +84,10 @@ build_project() {
 
 backend_build() {
   cd /var/www/pdf &&
-       go build &&
-       go mod vendor &&
-       go mod tidy &&
-       echo "backend build complete"
+  go build &&
+  go mod vendor &&
+  go mod tidy &&
+  echo "backend build complete"
 }
 
 frontend_build() {
@@ -99,18 +99,24 @@ frontend_build() {
 }
 
 git_install() {
-      apt-get update &&
-        apt install git
+  apt-get update &&
+  apt install git
 }
 
 apache2_stop() {
-    /etc/init.d/apache2 stop &&
-    update-rc.d apache2 disable &&
-    echo "apache2 stopped complete"
+  /etc/init.d/apache2 stop &&
+  update-rc.d apache2 disable &&
+  echo "apache2 stopped complete"
+}
+
+nginx_enable() {
+  /etc/init.d/nginx start &&
+  update-rc.d nginx enable
 }
 
 start_service() {
   apache2_stop &&
+  nginx_enable &&
   git_update &&
   stop_service &&
   docker-compose -f /var/www/pdf/docker-compose-prode.yaml build &&
@@ -135,10 +141,10 @@ stop_service() {
 }
 
 docker_install() {
-    apt install docker.io &&
-    apt install docker-compose &&
-    apt install net-tools &&
-    apt install htop
+  apt install docker.io &&
+  apt install docker-compose &&
+  apt install net-tools &&
+  apt install htop
 }
 
 git_init() {
@@ -160,19 +166,20 @@ ufw_init() {
   ufw allow http &&
   ufw allow ssh &&
   ufw allow 'Nginx Full' &&
+  ufw deny 3000/tcp &&
   ufw status numbered
 }
 
 go_install() {
-    apt install curl &&
-    cd /home &&
-    curl -OL https://golang.org/dl/go1.21.3.linux-amd64.tar.gz &&
-    tar -C /usr/local -xvf go1.21.3.linux-amd64.tar.gz &&
-    cd /usr/local/go &&
-    echo "export PATH=$PATH:/usr/local/go/bin" >> ~/.profile &&
-    cd /var/www/pdf &&
-    source ~/.profile &&
-    backend_build
+  apt install curl &&
+  cd /home &&
+  curl -OL https://golang.org/dl/go1.21.3.linux-amd64.tar.gz &&
+  tar -C /usr/local -xvf go1.21.3.linux-amd64.tar.gz &&
+  cd /usr/local/go &&
+  echo "export PATH=$PATH:/usr/local/go/bin" >> ~/.profile &&
+  cd /var/www/pdf &&
+  source ~/.profile &&
+  backend_build
 }
 
 if declare -f "$1" > /dev/null

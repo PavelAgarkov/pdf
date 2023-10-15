@@ -33,7 +33,7 @@ func (l *Factory) PanicLog(logText string, withStack string) {
 	defer func(logFile *os.File) {
 		err := logFile.Close()
 		if err != nil {
-			fmt.Println(err.Error())
+			fmt.Println(err.Error() + " panic")
 		}
 		<-l.panicSem
 	}(logFile)
@@ -48,7 +48,7 @@ func (l *Factory) ErrorLog(logText string, withStack string) {
 	defer func(logFile *os.File) {
 		err := logFile.Close()
 		if err != nil {
-			fmt.Println(err.Error())
+			fmt.Println(err.Error() + " error")
 		}
 		<-l.errSem
 	}(logFile)
@@ -63,7 +63,7 @@ func (l *Factory) WarningLog(logText string) {
 	defer func(logFile *os.File) {
 		err := logFile.Close()
 		if err != nil {
-			fmt.Println(err.Error())
+			fmt.Println(err.Error() + " warn")
 		}
 		<-l.warnSem
 	}(logFile)
@@ -77,7 +77,7 @@ func (l *Factory) InfoLog(logText string) {
 	defer func(logFile *os.File) {
 		err := logFile.Close()
 		if err != nil {
-			fmt.Println(err.Error())
+			fmt.Println(err.Error() + " info")
 		}
 		<-l.infoSem
 	}(logFile)
@@ -91,7 +91,7 @@ func (l *Factory) FrontendLog(logText string) {
 	defer func(logFile *os.File) {
 		err := logFile.Close()
 		if err != nil {
-			fmt.Println(err.Error())
+			fmt.Println(err.Error() + " front")
 		}
 		<-l.frontSem
 	}(logFile)
