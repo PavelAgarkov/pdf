@@ -114,7 +114,7 @@ start_service() {
   docker-compose -f /var/www/pdf/docker-compose-prode.yaml build &&
   build_project &&
   docker-compose -f /var/www/pdf/docker-compose-prode.yaml up -d &&
-  echo "service start on port 80" &&
+  echo "service start on port 443" &&
   docker-compose -f /var/www/pdf/docker-compose-prode.yaml stop node
 }
 
@@ -123,7 +123,7 @@ fast_update_service() {
   build_project &&
   stop_service &&
   docker-compose -f /var/www/pdf/docker-compose-prode.yaml up -d &&
-  echo "service start on port 80" &&
+  echo "service start on port 443" &&
   docker-compose -f /var/www/pdf/docker-compose-prode.yaml stop node
 }
 
