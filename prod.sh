@@ -19,6 +19,29 @@ command() {
     echo "monitor_ports - посмотреть открытые порт и сетевой экран"
 }
 
+generate_ssl() {
+    /etc/init.d/nginx start &&
+    update-rc.d nginx enable &&
+    apt-get install certbot &&
+    apt-get install python3-certbot-nginx &&
+    cd /etc/nginx/sites-available/ &&
+    touch pdf-lifeguard.conf &&
+    echo "server {
+              listen 81;
+              root /var/www/pdf;
+              client_max_body_size 100M;
+              server_tokens off;
+
+              server_name pdf-lifeguard.com www.pdf-lifeguard.com;
+
+              location / {
+                  proxy_pass http://localhost:3000/;
+              }
+          }" >> /etc/nginx/sites-available/pdf-lifeguard.conf &&
+          nginx -t && nginx -s reload
+
+}
+
 monitor_ports() {
   nmap -4 -Pn 176.119.159.215 &&
   ufw status numbered
@@ -71,8 +94,6 @@ git_install() {
 }
 
 apache2_stop() {
-  /etc/init.d/nginx stop &&
-  update-rc.d nginx disable &&
     /etc/init.d/apache2 stop &&
     update-rc.d apache2 disable &&
     echo "apache2 stopped complete"
@@ -106,7 +127,8 @@ stop_service() {
 docker_install() {
     apt install docker.io &&
     apt install docker-compose &&
-    apt install net-tools
+    apt install net-tools &&
+    apt install htop
 }
 
 git_init() {
