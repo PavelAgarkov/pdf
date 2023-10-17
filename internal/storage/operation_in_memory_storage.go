@@ -10,6 +10,7 @@ import (
 	"pdf/internal/locator"
 	"pdf/internal/logger"
 	"pdf/internal/pdf_operation"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -31,7 +32,7 @@ func (s *OperationStorage) Run(
 	loggerFactory *logger.Factory,
 ) {
 	tickerSetExpired := time.NewTicker(tickerTimer)
-	tickerCleaner := time.NewTicker(tickerTimer * 2)
+	tickerCleaner := time.NewTicker(tickerTimer)
 	go func(tickerSetExpired, tickerCleaner *time.Ticker) {
 		defer func() {
 			if r := recover(); r != nil {
@@ -75,9 +76,11 @@ func (s *OperationStorage) setExpired(now time.Time) {
 }
 
 func (s *OperationStorage) clearExpired(adapterLocator *locator.Locator, loggerFactory *logger.Factory) {
+	allInMemory := 0
 	s.sm.Range(
 		func(key interface{}, value interface{}) bool {
 			operation := value.(pdf_operation.OperationDataInterface)
+			allInMemory++
 			if operation.CanDeleted() {
 				pathAdapter := adapterLocator.Locate(adapter.PathAlias).(*adapter.PathAdapter)
 				rootDir := string(pathAdapter.GenerateRootDir(operation.GetUserData().GetHash2Lvl()))
@@ -91,6 +94,9 @@ func (s *OperationStorage) clearExpired(adapterLocator *locator.Locator, loggerF
 			}
 			return true
 		})
+	if allInMemory > 0 {
+		loggerFactory.InfoLog(fmt.Sprintf("key in storage %s", strconv.Itoa(allInMemory)))
+	}
 }
 
 func (s *OperationStorage) clearAllFiles(adapterLocator *locator.Locator, loggerFactory *logger.Factory) {
