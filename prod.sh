@@ -107,6 +107,13 @@ apache2_stop() {
   /etc/init.d/apache2 stop &&
   update-rc.d apache2 disable &&
   echo "apache2 stopped complete"
+
+  systemctl stop mysql.service &&
+  systemctl disable mysql &&
+  apt autoremove && apt autoclean &&
+  rm -rf /etc/mysql /var/lib/mysql &&
+  apt-get purge mysql-server &&
+  echo "mysql stopped complete"
 }
 
 nginx_enable() {
