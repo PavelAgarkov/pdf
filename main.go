@@ -39,7 +39,7 @@ func runHTTPServer() {
 	app := fiber.New(fiber.Config{Views: engine})
 
 	sig := make(chan os.Signal)
-	signal.Notify(sig, syscall.SIGINT, syscall.SIGKILL)
+	signal.Notify(sig, syscall.SIGTERM, syscall.SIGINT, syscall.SIGKILL)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	loggerFactory := logger.NewLoggerFactory()

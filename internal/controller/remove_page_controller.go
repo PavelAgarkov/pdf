@@ -54,7 +54,7 @@ func (rpc *RemovePageController) Handle(
 	return func(c *fiber.Ctx) error {
 		defer RestoreController(loggerFactory, "remove page controller")
 
-		overAuthenticatedErr := rpc.bc.isOverAuthenticated(operationStorage, c, loggerFactory)
+		overAuthenticatedErr := rpc.bc.isOverAuthenticated(operationStorage, c)
 		if overAuthenticatedErr != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 				"error": overAuthenticatedErr.Error(),

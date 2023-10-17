@@ -56,7 +56,7 @@ func (mc *MergeController) Handle(
 	return func(c *fiber.Ctx) error {
 		defer RestoreController(loggerFactory, "merge controller")
 
-		overAuthenticatedErr := mc.bc.isOverAuthenticated(operationStorage, c, loggerFactory)
+		overAuthenticatedErr := mc.bc.isOverAuthenticated(operationStorage, c)
 		if overAuthenticatedErr != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 				"error": overAuthenticatedErr.Error(),

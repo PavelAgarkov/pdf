@@ -54,7 +54,7 @@ func (spc *SplitPageController) Handle(
 	return func(c *fiber.Ctx) error {
 		defer RestoreController(loggerFactory, "split page controller")
 
-		overAuthenticatedErr := spc.bc.isOverAuthenticated(operationStorage, c, loggerFactory)
+		overAuthenticatedErr := spc.bc.isOverAuthenticated(operationStorage, c)
 		if overAuthenticatedErr != nil {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 				"error": overAuthenticatedErr.Error(),

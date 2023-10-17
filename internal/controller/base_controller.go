@@ -76,13 +76,11 @@ func (bc *BaseController) isAuthenticated(
 func (bc *BaseController) isOverAuthenticated(
 	operationStorage *storage.OperationStorage,
 	c *fiber.Ctx,
-	loggerFactory *logger.Factory,
 ) error {
 	authToken := service.ParseBearerHeader(c.GetReqHeaders()[internal.AuthenticationHeader])
 	_, hit := operationStorage.Get(hash.GenerateNextLevelHashByPrevious(internal.Hash1lvl(authToken), true))
 	if hit {
 		errMsg := fmt.Sprintf("can't process already in storage")
-		loggerFactory.ErrorLog(errMsg, "")
 		return errors.New(errMsg)
 	}
 
