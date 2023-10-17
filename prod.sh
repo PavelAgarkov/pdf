@@ -130,7 +130,7 @@ fast_update_service() {
   git_update &&
   build_project &&
   stop_service &&
-  docker-compose -f /var/www/pdf/docker-compose-prode.yaml up -d  --remove-orphans&&
+  docker-compose -f /var/www/pdf/docker-compose-prode.yaml up -d  --remove-orphans &&
   echo "service start on port 443" &&
   docker-compose -f /var/www/pdf/docker-compose-prode.yaml stop node
 }
@@ -138,6 +138,12 @@ fast_update_service() {
 stop_service() {
   docker-compose -f /var/www/pdf/docker-compose-prode.yaml stop &&
   echo "service stopped complete"
+}
+
+start_after_stop() {
+    docker-compose -f /var/www/pdf/docker-compose-prode.yaml up -d  --remove-orphans &&
+    echo "service start on port 443" &&
+    docker-compose -f /var/www/pdf/docker-compose-prode.yaml stop node
 }
 
 docker_install() {
