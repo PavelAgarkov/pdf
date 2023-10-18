@@ -32,13 +32,24 @@ generate_ssl() {
     echo "server {
               listen 80;
 
-              client_max_body_size 100M;
+              client_max_body_size 100m;
               server_tokens off;
 
               server_name pdf-lifeguard.com www.pdf-lifeguard.com;
 
               location / {
-                  proxy_pass http://localhost:3000/;
+                  proxy_connect_timeout 60s;
+                  proxy_send_timeout 60s;
+                  proxy_read_timeout 60s;
+
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+                  proxy_set_header Host $http_host;
+                  proxy_set_header X-NginX-Proxy true;
+                  client_max_body_size 100m;
+
+                  proxy_pass http://0.0.0.0:3000/;
               }
           }" >> /etc/nginx/sites-available/pdf-lifeguard.conf &&
     ln -s /etc/nginx/sites-available/pdf-lifeguard.conf /etc/nginx/sites-enabled/ &&

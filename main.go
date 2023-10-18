@@ -36,7 +36,10 @@ func runHTTPServer() {
 		adapter.NewArchiveAdapter(pathAdapter),
 	)
 	engine := html.New(adapter.GenerateFrontendDist(), ".html")
-	app := fiber.New(fiber.Config{Views: engine})
+	app := fiber.New(fiber.Config{
+		Views:     engine,
+		BodyLimit: 100 * 1024 * 1024,
+	})
 
 	sig := make(chan os.Signal)
 	signal.Notify(sig, syscall.SIGTERM, syscall.SIGINT, syscall.SIGKILL)
