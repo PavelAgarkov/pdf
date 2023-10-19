@@ -65,7 +65,7 @@ func (mc *MergeController) Handle(
 
 		authToken := service.GenerateBearerToken()
 
-		ctxC, cancel := context.WithTimeout(ctx, 75*time.Second)
+		ctxC, cancel := context.WithTimeout(ctx, 200*time.Second)
 		defer cancel()
 		cr := make(chan ResponseInterface)
 		start := make(chan struct{})

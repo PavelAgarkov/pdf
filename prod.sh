@@ -38,9 +38,9 @@ generate_ssl() {
               server_name pdf-lifeguard.com www.pdf-lifeguard.com;
 
               location / {
-                  proxy_connect_timeout 75s;
-                  proxy_send_timeout 75s;
-                  proxy_read_timeout 75s;
+                  proxy_connect_timeout 200s;
+                  proxy_send_timeout 200s;
+                  proxy_read_timeout 200s;
 
                   proxy_set_header X-NginX-Proxy true;
                   client_max_body_size 100m;
