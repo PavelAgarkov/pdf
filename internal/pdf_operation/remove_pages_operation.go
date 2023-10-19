@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/pdfcpu/pdfcpu/pkg/api"
 	"os"
 	"pdf/internal"
 	"pdf/internal/adapter"
@@ -69,8 +68,8 @@ func (rpo *RemovePagesOperation) Execute(ctx context.Context, locator *locator.L
 	pdfAdapter := locator.Locate(adapter.PdfAlias).(*adapter.PdfAdapter)
 
 	many, intIntervals := internal.ParseIntervals(removeIntervals)
-	pageCount, err := api.PageCountFile(inFile)
 	maxValue := slices.Max(many)
+	pageCount, err := pdfAdapter.PageCount(ctx, inFile)
 
 	if err != nil {
 		wrapErr := fmt.Errorf("can't execute operation REMOVE_PAGES to file: can't page count %w", err)
@@ -85,7 +84,7 @@ func (rpo *RemovePagesOperation) Execute(ctx context.Context, locator *locator.L
 	}
 
 	intervals := internal.ParseIntIntervalsToString(intIntervals)
-	err = pdfAdapter.RemovePagesFile(inFile, outFile, intervals)
+	err = pdfAdapter.RemovePagesFile(ctx, inFile, outFile, intervals)
 
 	if err != nil {
 		wrapErr := fmt.Errorf("can't execute operation REMOVE_PAGES to file: %w", err)
@@ -93,7 +92,7 @@ func (rpo *RemovePagesOperation) Execute(ctx context.Context, locator *locator.L
 		return "", wrapErr
 	}
 
-	err = pdfAdapter.Optimize(outFile, outFile)
+	err = pdfAdapter.Optimize(ctx, outFile, outFile)
 	if err != nil {
 		wrapErr := fmt.Errorf("can't optimize operation REMOVE_PAGES to file: %w", err)
 		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(wrapErr.Error()))

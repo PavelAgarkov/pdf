@@ -38,7 +38,7 @@ func runHTTPServer() {
 	engine := html.New(adapter.GenerateFrontendDist(), ".html")
 	app := fiber.New(fiber.Config{
 		Views:     engine,
-		BodyLimit: 100 * 1024 * 1024,
+		BodyLimit: 100 * 1024 * 1024, //100Mb
 	})
 
 	sig := make(chan os.Signal)

@@ -46,7 +46,7 @@ func (mo *MergeOperation) Execute(ctx context.Context, locator *locator.Locator,
 	outFile := string(bo.GetOutDir()) + string(bo.GetUserData().GetHash1Lvl()) + ".pdf"
 
 	pdfAdapter := locator.Locate(adapter.PdfAlias).(*adapter.PdfAdapter)
-	err := pdfAdapter.MergeFiles(inFiles, outFile)
+	err := pdfAdapter.MergeFiles(ctx, inFiles, outFile)
 
 	if err != nil {
 		wrapErr := fmt.Errorf("can't execute operation MERGE to files: %w", err)
@@ -54,7 +54,7 @@ func (mo *MergeOperation) Execute(ctx context.Context, locator *locator.Locator,
 		return "", wrapErr
 	}
 
-	err = pdfAdapter.Optimize(outFile, outFile)
+	err = pdfAdapter.Optimize(ctx, outFile, outFile)
 	if err != nil {
 		wrapErr := fmt.Errorf("can't optimize operation MERGE to file: %w", err)
 		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(wrapErr.Error()))
