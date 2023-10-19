@@ -102,7 +102,12 @@ func (so *SplitOperation) Execute(ctx context.Context, locator *locator.Locator,
 	}
 
 	fileAdapter := locator.Locate(adapter.FileAlias).(*adapter.FileAdapter)
-	splitEntries, err := fileAdapter.GetAllEntriesFromDir(string(so.GetSplitDir()), ".pdf")
+	splitEntries, err := fileAdapter.GetAllEntriesFromDir(ctx, string(so.GetSplitDir()), ".pdf")
+	if err != nil {
+		wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s", err)
+		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(wrapErr.Error()))
+		return "", wrapErr
+	}
 
 	if err != nil {
 		wrapErr := fmt.Errorf("can't execute operation SPLIT to file %s: cant read split dir", err)
@@ -118,8 +123,7 @@ func (so *SplitOperation) Execute(ctx context.Context, locator *locator.Locator,
 		return "", wrapErr
 	}
 
-	outEntries, err := fileAdapter.GetAllEntriesFromDir(string(bo.GetOutDir()), ".pdf")
-
+	outEntries, err := fileAdapter.GetAllEntriesFromDir(ctx, string(bo.GetOutDir()), ".pdf")
 	if err != nil {
 		wrapErr := fmt.Errorf("can't execute operation SPLIT to file: cant read out dir:  %w", err)
 		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(wrapErr.Error()))

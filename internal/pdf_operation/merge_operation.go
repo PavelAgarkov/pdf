@@ -62,7 +62,12 @@ func (mo *MergeOperation) Execute(ctx context.Context, locator *locator.Locator,
 	}
 
 	fileAdapter := locator.Locate(adapter.FileAlias).(*adapter.FileAdapter)
-	outEntries, err := fileAdapter.GetAllEntriesFromDir(string(bo.GetOutDir()), ".pdf")
+	outEntries, err := fileAdapter.GetAllEntriesFromDir(ctx, string(bo.GetOutDir()), ".pdf")
+	if err != nil {
+		wrapErr := fmt.Errorf("can't execute operation MERGE:  %w", err)
+		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(wrapErr.Error()))
+		return "", wrapErr
+	}
 
 	pathAdapter := locator.Locate(adapter.PathAlias).(*adapter.PathAdapter)
 	associationPath := pathAdapter.BuildOutPathFilesMap(outEntries, mo.GetBaseOperation().GetUserData().GetHash2Lvl())

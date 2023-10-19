@@ -1,6 +1,7 @@
 package adapter
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -32,7 +33,10 @@ func (fa *FileAdapter) CreateDir(dirPath string, perm os.FileMode) error {
 	return nil
 }
 
-func (fa *FileAdapter) GetAllEntriesFromDir(path, format string) (map[string]string, error) {
+func (fa *FileAdapter) GetAllEntriesFromDir(ctx context.Context, path, format string) (map[string]string, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	entries, err := os.ReadDir(filepath.FromSlash(path))
 	mapFiles := make(map[string]string)
 

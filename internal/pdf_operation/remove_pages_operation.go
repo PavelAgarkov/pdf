@@ -100,7 +100,12 @@ func (rpo *RemovePagesOperation) Execute(ctx context.Context, locator *locator.L
 	}
 
 	fileAdapter := locator.Locate(adapter.FileAlias).(*adapter.FileAdapter)
-	outEntries, err := fileAdapter.GetAllEntriesFromDir(string(bo.GetOutDir()), ".pdf")
+	outEntries, err := fileAdapter.GetAllEntriesFromDir(ctx, string(bo.GetOutDir()), ".pdf")
+	if err != nil {
+		wrapErr := fmt.Errorf("can't execute operation REMOVE_PAGES:  %w", err)
+		bo.SetStatus(internal.StatusCanceled).SetStoppedReason(internal.StoppedReason(wrapErr.Error()))
+		return "", wrapErr
+	}
 
 	associationPath := pathAdapter.BuildOutPathFilesMap(outEntries, rpo.GetBaseOperation().GetUserData().GetHash2Lvl())
 	archiveAdapter := locator.Locate(adapter.ArchiveAlias).(*adapter.ArchiveAdapter)
