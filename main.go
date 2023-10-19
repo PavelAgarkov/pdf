@@ -76,8 +76,8 @@ func runHTTPServer() {
 		cleanupTasks(operationStorage, adapterLocator, loggerFactory)
 		serverShutdown.Add(1)
 		_ = app.ShutdownWithContext(ctx)
-		serverShutdown.Done()
 		loggerFactory.InfoLog("Gracefully shutting down... Server STOPPED")
+		serverShutdown.Done()
 	}()
 
 	if err := app.Listen(address); err != nil {
