@@ -19,6 +19,23 @@ command() {
     echo "monitor_ports - посмотреть открытые порт и сетевой экран"
 }
 
+#https://www.digitalocean.com/community/tutorials/how-to-add-swap-space-on-ubuntu-20-04
+swap_config() {
+  swapoff -a &&
+  fallocate -l 6G /swapfile && ls -lh /swapfile &&
+  chmod 600 /swapfile && ls -lh /swapfile &&
+  mkswap /swapfile && swapon /swapfile &&
+  swapon --show &&
+  cp /etc/fstab /etc/fstab.bak &&
+  echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab &&
+  echo "vm.swappiness=10" >> /etc/sysctl.conf &&
+  cat /proc/sys/vm/swappiness &&
+  echo "vm.vfs_cache_pressure=50" >> /etc/sysctl.conf &&
+  cat /proc/sys/vm/vfs_cache_pressure &&
+  sysctl vm.swappiness=10 &&
+  sysctl vm.vfs_cache_pressure=50
+}
+
 #176.119.159.215 pdf-lifeguard.com www.pdf-lifeguard.com
 
 generate_ssl() {
