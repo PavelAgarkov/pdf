@@ -79,11 +79,11 @@ func (spc *SplitPageController) Handle(
 			authToken,
 			loggerFactory,
 		)
-		res := spc.bc.SelectResponse(ctxC, cr, start)
+		res := spc.bc.Select(ctxC, cancel, cr, start)
 		if res == nil {
 			defer loggerFactory.PanicLog("split page controller: context expired", "")
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": "merge controller: context expired",
+				"error": "split controller: context expired",
 			})
 		}
 
@@ -127,7 +127,7 @@ func (spc *SplitPageController) realHandler(
 ) {
 	<-start
 
-	defer RestoreController(loggerFactory, "merge controller")
+	defer RestoreController(loggerFactory, "split page controller")
 
 	secondLevelHash := hash.GenerateNextLevelHashByPrevious(internal.Hash1lvl(authToken), true)
 	pathAdapter := adapterLocator.Locate(adapter.PathAlias).(*adapter.PathAdapter)
@@ -147,7 +147,7 @@ func (spc *SplitPageController) realHandler(
 		_ = os.RemoveAll(string(inDir))
 		_ = os.RemoveAll(string(outDir))
 		_ = os.RemoveAll(string(splitDir))
-		cr <- &MergeResponse{
+		cr <- &SplitResponse{
 			str: "panic_context",
 			err: errors.New("handle cancel"),
 		}
@@ -155,7 +155,7 @@ func (spc *SplitPageController) realHandler(
 
 	if err != nil {
 		_ = os.RemoveAll(string(rootDir))
-		cr <- &MergeResponse{
+		cr <- &SplitResponse{
 			str: "cant_create_dir",
 			err: fmt.Errorf("cant_read_form: %w", err),
 		}
@@ -165,7 +165,7 @@ func (spc *SplitPageController) realHandler(
 	form, errRead := c.MultipartForm()
 	if errRead != nil {
 		_ = os.RemoveAll(string(rootDir))
-		cr <- &MergeResponse{
+		cr <- &SplitResponse{
 			str: "cant_read_form",
 			err: fmt.Errorf("cant_read_form: %w", errRead),
 		}
@@ -175,7 +175,7 @@ func (spc *SplitPageController) realHandler(
 	errForm := spc.formValidation(form)
 	if errForm != nil {
 		_ = os.RemoveAll(string(rootDir))
-		cr <- &MergeResponse{
+		cr <- &SplitResponse{
 			str: internal.ErrorForm,
 			err: errForm,
 		}
@@ -191,7 +191,7 @@ func (spc *SplitPageController) realHandler(
 			errSave := c.SaveFile(fileHeader, string(pathToFile))
 			if errSave != nil {
 				_ = os.RemoveAll(string(rootDir))
-				cr <- &MergeResponse{
+				cr <- &SplitResponse{
 					str: "cant_save_file_from_form",
 					err: fmt.Errorf("cant_save_file_from_form: %w", errSave),
 				}
@@ -227,7 +227,7 @@ func (spc *SplitPageController) realHandler(
 	)
 	if operationErr != nil {
 		_ = os.RemoveAll(string(rootDir))
-		cr <- &MergeResponse{
+		cr <- &SplitResponse{
 			str: internal.OperationError,
 			err: fmt.Errorf("can't make opearation: %w", operationErr),
 		}
@@ -243,7 +243,7 @@ func (spc *SplitPageController) realHandler(
 
 	operationStorage.Insert(secondLevelHash, data)
 
-	cr <- &MergeResponse{str: ChannelResponseOK, err: nil}
+	cr <- &SplitResponse{str: ChannelResponseOK, err: nil}
 	return
 }
 

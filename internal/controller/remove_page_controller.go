@@ -79,11 +79,11 @@ func (rpc *RemovePageController) Handle(
 			authToken,
 			loggerFactory,
 		)
-		res := rpc.bc.SelectResponse(ctxC, cr, start)
+		res := rpc.bc.Select(ctxC, cancel, cr, start)
 		if res == nil {
 			loggerFactory.PanicLog("remove page controller: context expired", "")
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": "merge controller: context expired",
+				"error": "remove page controller: context expired",
 			})
 		}
 
@@ -127,7 +127,7 @@ func (rpc *RemovePageController) realHandler(
 ) {
 	<-start
 
-	defer RestoreController(loggerFactory, "merge controller")
+	defer RestoreController(loggerFactory, "remove page controller")
 
 	secondLevelHash := hash.GenerateNextLevelHashByPrevious(internal.Hash1lvl(authToken), true)
 	pathAdapter := adapterLocator.Locate(adapter.PathAlias).(*adapter.PathAdapter)
@@ -144,7 +144,7 @@ func (rpc *RemovePageController) realHandler(
 	defer func() {
 		_ = os.RemoveAll(string(inDir))
 		_ = os.RemoveAll(string(outDir))
-		cr <- &MergeResponse{
+		cr <- &RemovePageResponse{
 			str: "panic_context",
 			err: errors.New("handle cancel"),
 		}
@@ -152,7 +152,7 @@ func (rpc *RemovePageController) realHandler(
 
 	if err != nil {
 		_ = os.RemoveAll(string(rootDir))
-		cr <- &MergeResponse{
+		cr <- &RemovePageResponse{
 			str: "cant_create_dir",
 			err: fmt.Errorf("cant_read_form: %w", err),
 		}
@@ -162,7 +162,7 @@ func (rpc *RemovePageController) realHandler(
 	form, errRead := c.MultipartForm()
 	if errRead != nil {
 		_ = os.RemoveAll(string(rootDir))
-		cr <- &MergeResponse{
+		cr <- &RemovePageResponse{
 			str: "cant_read_form",
 			err: fmt.Errorf("cant_read_form: %w", errRead),
 		}
@@ -172,7 +172,7 @@ func (rpc *RemovePageController) realHandler(
 	errForm := rpc.formValidation(form)
 	if errForm != nil {
 		_ = os.RemoveAll(string(rootDir))
-		cr <- &MergeResponse{
+		cr <- &RemovePageResponse{
 			str: internal.ErrorForm,
 			err: errForm,
 		}
@@ -188,7 +188,7 @@ func (rpc *RemovePageController) realHandler(
 			errSave := c.SaveFile(fileHeader, string(pathToFile))
 			if errSave != nil {
 				_ = os.RemoveAll(string(rootDir))
-				cr <- &MergeResponse{
+				cr <- &RemovePageResponse{
 					str: "cant_save_file_from_form",
 					err: fmt.Errorf("cant_save_file_from_form: %w", errSave),
 				}
@@ -225,7 +225,7 @@ func (rpc *RemovePageController) realHandler(
 	)
 	if operationErr != nil {
 		_ = os.RemoveAll(string(rootDir))
-		cr <- &MergeResponse{
+		cr <- &RemovePageResponse{
 			str: internal.OperationError,
 			err: fmt.Errorf("can't make opearation: %w", operationErr),
 		}
@@ -241,7 +241,7 @@ func (rpc *RemovePageController) realHandler(
 
 	operationStorage.Insert(secondLevelHash, data)
 
-	cr <- &MergeResponse{str: ChannelResponseOK, err: nil}
+	cr <- &RemovePageResponse{str: ChannelResponseOK, err: nil}
 	return
 }
 

@@ -34,6 +34,10 @@ func (rpo *RemovePagesOperation) GetBaseOperation() *BaseOperation {
 }
 
 func (rpo *RemovePagesOperation) Execute(ctx context.Context, locator *locator.Locator, format string) (string, error) {
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
+
 	defer func() {
 		_ = os.RemoveAll(string(rpo.GetBaseOperation().GetInDir()))
 		_ = os.RemoveAll(string(rpo.GetBaseOperation().GetOutDir()))

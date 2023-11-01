@@ -39,7 +39,7 @@ const (
 	FaviconFile    = "./pdf-frontend/dist/favicon.ico"
 	FrontendAssets = "./pdf-frontend/dist/assets/"
 
-	MaxSumUploadFilesSizeByte = 100000000
+	MaxSumUploadFilesSizeByte = 20000000
 	MaxNumberUploadFiles      = 100
 
 	ArchiveFormatKeyForRequest = "archive_format"

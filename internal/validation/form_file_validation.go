@@ -38,7 +38,7 @@ func FormFileValidation(form *multipart.Form) error {
 	}
 
 	if sumSize > internal.MaxSumUploadFilesSizeByte {
-		return errors.New("upload files must be less 100Mb")
+		return errors.New("upload files must be less 20Mb")
 	}
 
 	if countFiles > internal.MaxNumberUploadFiles {

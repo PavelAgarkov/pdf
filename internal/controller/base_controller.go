@@ -24,8 +24,9 @@ func NewBaseController() *BaseController {
 	return &BaseController{}
 }
 
-func (bc *BaseController) SelectResponse(
+func (bc *BaseController) Select(
 	ctx context.Context,
+	cancelF context.CancelFunc,
 	ch chan ResponseInterface,
 	start chan struct{},
 ) ResponseInterface {

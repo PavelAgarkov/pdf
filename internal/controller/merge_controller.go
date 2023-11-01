@@ -81,7 +81,7 @@ func (mc *MergeController) Handle(
 			authToken,
 			loggerFactory,
 		)
-		res := mc.bc.SelectResponse(ctxC, cr, start)
+		res := mc.bc.Select(ctxC, cancel, cr, start)
 		if res == nil {
 			loggerFactory.PanicLog("merge controller: context expired", "")
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
