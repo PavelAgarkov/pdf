@@ -55,7 +55,6 @@ func runHTTPServer() {
 
 	route.ServiceRouter(app)
 	route.Router(
-		ctx,
 		app,
 		operationStorage,
 		operationFactory,

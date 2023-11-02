@@ -47,7 +47,6 @@ func (r *MergeResponse) GetErr() error {
 }
 
 func (mc *MergeController) Handle(
-	ctx context.Context,
 	operationStorage *storage.OperationStorage,
 	operationFactory *pdf_operation.OperationsFactory,
 	adapterLocator *locator.Locator,
@@ -64,48 +63,45 @@ func (mc *MergeController) Handle(
 		}
 
 		authToken := service.GenerateBearerToken()
+		ctx := c.UserContext()
+		responseCh := make(chan ResponseInterface, 2)
 
-		ctxC, cancel := context.WithTimeout(ctx, 200*time.Second)
-		defer cancel()
-		cr := make(chan ResponseInterface)
-		start := make(chan struct{})
-
-		go mc.realHandler(
+		mc.mergeHandler(
 			c,
-			ctxC,
-			start,
-			cr,
+			ctx,
+			responseCh,
 			operationStorage,
 			operationFactory,
 			adapterLocator,
 			authToken,
 			loggerFactory,
 		)
-		res := mc.bc.Select(ctxC, cancel, cr, start)
-		if res == nil {
+		result := mc.bc.Select(ctx, responseCh)
+
+		if result == nil {
 			loggerFactory.PanicLog("merge controller: context expired", "")
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": "merge controller: context expired",
 			})
 		}
 
-		if res.GetStr() == internal.ErrorForm {
+		if result.GetStr() == internal.ErrorForm {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"error": res.GetErr().Error(),
+				"error": result.GetErr().Error(),
 			})
 		}
 
-		if res.GetStr() == internal.OperationError {
-			loggerFactory.ErrorLog(res.GetErr().Error(), "")
+		if result.GetStr() == internal.OperationError {
+			loggerFactory.ErrorLog(result.GetErr().Error(), "")
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"error": "operation_version_is_not_suitable",
 			})
 		}
 
-		if res.GetStr() != ChannelResponseOK {
-			loggerFactory.ErrorLog(res.GetErr().Error(), "")
+		if result.GetStr() != ChannelResponseOK {
+			loggerFactory.ErrorLog(result.GetErr().Error(), "")
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"error": res.GetErr().Error(),
+				"error": result.GetErr().Error(),
 			})
 		}
 
@@ -116,10 +112,9 @@ func (mc *MergeController) Handle(
 	}
 }
 
-func (mc *MergeController) realHandler(
+func (mc *MergeController) mergeHandler(
 	c *fiber.Ctx,
 	ctx context.Context,
-	start chan struct{},
 	cr chan ResponseInterface,
 	operationStorage *storage.OperationStorage,
 	operationFactory *pdf_operation.OperationsFactory,
@@ -127,8 +122,6 @@ func (mc *MergeController) realHandler(
 	authToken string,
 	loggerFactory *logger.Factory,
 ) {
-	<-start
-
 	defer RestoreController(loggerFactory, "merge controller")
 
 	secondLevelHash := hash.GenerateNextLevelHashByPrevious(internal.Hash1lvl(authToken), true)

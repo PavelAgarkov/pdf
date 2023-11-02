@@ -26,11 +26,8 @@ func NewBaseController() *BaseController {
 
 func (bc *BaseController) Select(
 	ctx context.Context,
-	cancelF context.CancelFunc,
 	ch chan ResponseInterface,
-	start chan struct{},
 ) ResponseInterface {
-	start <- struct{}{}
 	select {
 	case <-ctx.Done():
 		res, ok := <-ch
@@ -54,7 +51,8 @@ func (bc *BaseController) isAuthenticated(
 	operationStorage *storage.OperationStorage,
 	c *fiber.Ctx,
 ) (pdf_operation.OperationDataInterface, error) {
-	authToken := service.ParseBearerHeader(c.GetReqHeaders()[internal.AuthenticationHeader])
+	authHeader := c.GetReqHeaders()[internal.AuthenticationHeader][0]
+	authToken := service.ParseBearerHeader(authHeader)
 	operationData, hit := operationStorage.Get(hash.GenerateNextLevelHashByPrevious(internal.Hash1lvl(authToken), true))
 	if !hit {
 		errMsg := fmt.Sprintf("can't find hit from storage")
@@ -78,7 +76,8 @@ func (bc *BaseController) isOverAuthenticated(
 	operationStorage *storage.OperationStorage,
 	c *fiber.Ctx,
 ) error {
-	authToken := service.ParseBearerHeader(c.GetReqHeaders()[internal.AuthenticationHeader])
+	authHeader := c.GetReqHeaders()[internal.AuthenticationHeader][0]
+	authToken := service.ParseBearerHeader(authHeader)
 	_, hit := operationStorage.Get(hash.GenerateNextLevelHashByPrevious(internal.Hash1lvl(authToken), true))
 	if hit {
 		errMsg := fmt.Sprintf("can't process already in storage")

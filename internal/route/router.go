@@ -1,61 +1,95 @@
 package route
 
 import (
-	"context"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/timeout"
 	"pdf/internal/controller"
 	"pdf/internal/locator"
 	"pdf/internal/logger"
 	"pdf/internal/pdf_operation"
 	"pdf/internal/storage"
+	"time"
 )
 
 func Router(
-	ctx context.Context,
 	app *fiber.App,
 	operationStorage *storage.OperationStorage,
 	operationFactory *pdf_operation.OperationsFactory,
 	adapterLocator *locator.Locator,
 	loggerFactory *logger.Factory,
 ) {
+	v1group := app.Group("/v1")
 	bc := controller.NewBaseController()
-	app.Get("/download/", controller.NewDownloadController(bc).Handle(
+
+	v1Router(
+		operationStorage,
+		operationFactory,
+		adapterLocator,
+		loggerFactory,
+		bc,
+		v1group,
+	)
+}
+
+func v1Router(
+	operationStorage *storage.OperationStorage,
+	operationFactory *pdf_operation.OperationsFactory,
+	adapterLocator *locator.Locator,
+	loggerFactory *logger.Factory,
+	bc *controller.BaseController,
+	v1group fiber.Router,
+) {
+	v1group.Post("/frontend-log-write/", controller.NewFrontendLogController(bc).Handle(
+		loggerFactory,
+	)).Name("frontend-log-write")
+
+	v1group.Get("/download/", controller.NewDownloadController(bc).Handle(
 		operationStorage,
 		adapterLocator,
 		loggerFactory,
 	)).Name("download")
 
-	app.Get("/cancel/", controller.NewCancelController(bc).Handle(
+	v1group.Get("/cancel/", controller.NewCancelController(bc).Handle(
 		operationStorage,
 		adapterLocator,
 		loggerFactory,
 	)).Name("cancel")
 
-	app.Post("/merge/", controller.NewMergeController(bc).Handle(
-		ctx,
-		operationStorage,
-		operationFactory,
-		adapterLocator,
-		loggerFactory,
-	)).Name("merge")
+	v1group.Post("/merge/",
+		timeout.NewWithContext(
+			controller.NewMergeController(bc).Handle(
+				//ctx,
+				operationStorage,
+				operationFactory,
+				adapterLocator,
+				loggerFactory,
+			), 200*time.Second,
+		),
+	).Name("merge")
 
-	app.Post("/split-page/", controller.NewSplitPageController(bc).Handle(
-		ctx,
-		operationStorage,
-		operationFactory,
-		adapterLocator,
-		loggerFactory,
-	)).Name("split-page")
+	v1group.Post("/split-page/",
+		timeout.NewWithContext(
+			controller.NewSplitPageController(bc).Handle(
+				//ctx,
+				operationStorage,
+				operationFactory,
+				adapterLocator,
+				loggerFactory,
+			),
+			200*time.Second,
+		),
+	).Name("split-page")
 
-	app.Post("/remove-pages/", controller.NewRemovePageController(bc).Handle(
-		ctx,
-		operationStorage,
-		operationFactory,
-		adapterLocator,
-		loggerFactory,
-	)).Name("remove-pages")
-
-	app.Post("/frontend-log-write/", controller.NewFrontendLogController(bc).Handle(
-		loggerFactory,
-	)).Name("frontend-log-write")
+	v1group.Post("/remove-pages/",
+		timeout.NewWithContext(
+			controller.NewRemovePageController(bc).Handle(
+				//ctx,
+				operationStorage,
+				operationFactory,
+				adapterLocator,
+				loggerFactory,
+			),
+			200*time.Second,
+		),
+	).Name("remove-pages")
 }

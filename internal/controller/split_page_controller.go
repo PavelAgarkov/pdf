@@ -45,7 +45,6 @@ func (r *SplitResponse) GetErr() error {
 }
 
 func (spc *SplitPageController) Handle(
-	ctx context.Context,
 	operationStorage *storage.OperationStorage,
 	operationFactory *pdf_operation.OperationsFactory,
 	adapterLocator *locator.Locator,
@@ -62,48 +61,45 @@ func (spc *SplitPageController) Handle(
 		}
 
 		authToken := service.GenerateBearerToken()
+		ctx := c.UserContext()
+		responseCh := make(chan ResponseInterface, 2)
 
-		ctxC, cancel := context.WithTimeout(ctx, 200*time.Second)
-		defer cancel()
-		cr := make(chan ResponseInterface)
-		start := make(chan struct{})
-
-		go spc.realHandler(
+		spc.splitHandler(
 			c,
-			ctxC,
-			start,
-			cr,
+			ctx,
+			responseCh,
 			operationStorage,
 			operationFactory,
 			adapterLocator,
 			authToken,
 			loggerFactory,
 		)
-		res := spc.bc.Select(ctxC, cancel, cr, start)
-		if res == nil {
+		result := spc.bc.Select(ctx, responseCh)
+
+		if result == nil {
 			defer loggerFactory.PanicLog("split page controller: context expired", "")
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": "split controller: context expired",
 			})
 		}
 
-		if res.GetStr() == internal.ErrorForm {
+		if result.GetStr() == internal.ErrorForm {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"error": res.GetErr().Error(),
+				"error": result.GetErr().Error(),
 			})
 		}
 
-		if res.GetStr() == internal.OperationError {
-			loggerFactory.ErrorLog(res.GetErr().Error(), "")
+		if result.GetStr() == internal.OperationError {
+			loggerFactory.ErrorLog(result.GetErr().Error(), "")
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"error": "operation_version_is_not_suitable",
 			})
 		}
 
-		if res.GetStr() != ChannelResponseOK {
-			loggerFactory.ErrorLog(res.GetErr().Error(), "")
+		if result.GetStr() != ChannelResponseOK {
+			loggerFactory.ErrorLog(result.GetErr().Error(), "")
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"error": res.GetErr().Error(),
+				"error": result.GetErr().Error(),
 			})
 		}
 
@@ -114,10 +110,9 @@ func (spc *SplitPageController) Handle(
 	}
 }
 
-func (spc *SplitPageController) realHandler(
+func (spc *SplitPageController) splitHandler(
 	c *fiber.Ctx,
 	ctx context.Context,
-	start chan struct{},
 	cr chan ResponseInterface,
 	operationStorage *storage.OperationStorage,
 	operationFactory *pdf_operation.OperationsFactory,
@@ -125,8 +120,6 @@ func (spc *SplitPageController) realHandler(
 	authToken string,
 	loggerFactory *logger.Factory,
 ) {
-	<-start
-
 	defer RestoreController(loggerFactory, "split page controller")
 
 	secondLevelHash := hash.GenerateNextLevelHashByPrevious(internal.Hash1lvl(authToken), true)
